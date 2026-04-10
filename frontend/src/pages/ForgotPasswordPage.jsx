@@ -16,10 +16,12 @@ export default function ForgotPasswordPage() {
 
     if (!email) {
       setError('Email address is required.')
+      setTimeout(() => setError(''), 5000)
       return
     }
     if (!EMAIL_RE.test(email)) {
       setError('Please enter a valid email address.')
+      setTimeout(() => setError(''), 5000)
       return
     }
 
@@ -29,6 +31,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true)
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send reset email. Please try again.')
+      setTimeout(() => setError(''), 5000)
     } finally {
       setLoading(false)
     }

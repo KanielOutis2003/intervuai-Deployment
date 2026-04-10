@@ -314,18 +314,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setServerError('')
     const errs = validate()
     if (Object.keys(errs).length) {
       setFieldErrors(errs)
       return
     }
     setFieldErrors({})
+    setServerError('')
     const result = await login(form.email, form.password, rememberMe)
     if (result.success) {
       navigate('/dashboard')
     } else {
       setServerError(result.error)
+      setTimeout(() => setServerError(''), 5000)
     }
   }
 

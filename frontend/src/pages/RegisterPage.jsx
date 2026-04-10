@@ -40,6 +40,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   const strength = getPasswordStrength(form.password)
 
@@ -61,24 +62,32 @@ export default function RegisterPage() {
     } else if (form.password !== form.confirm) {
       errs.confirm = 'Passwords do not match.'
     }
+    if (!agreedToTerms) {
+      errs.terms = 'You must agree to the Terms of Service to create an account.'
+    }
     return errs
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setServerError('')
     const errs = validate()
     if (Object.keys(errs).length) {
       setFieldErrors(errs)
+      if (!agreedToTerms) {
+        setServerError('Please agree to the Terms of Service before creating your account.')
+        setTimeout(() => setServerError(''), 5000)
+      }
       return
     }
     setFieldErrors({})
+    setServerError('')
     const result = await register(form.email, form.password, form.fullName)
     if (result.success) {
       setSuccess('Account created! Please check your email to verify, then sign in.')
       setTimeout(() => navigate('/login'), 3000)
     } else {
       setServerError(result.error)
+      setTimeout(() => setServerError(''), 5000)
     }
   }
 
@@ -221,8 +230,17 @@ export default function RegisterPage() {
             {/* Terms */}
             <div className="form-group">
               <label className="form-check">
-                <input type="checkbox" required /> I agree to the <a href="#" className="terms-link">Terms of Service</a> and <a href="#" className="terms-link">Privacy Policy</a>
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={e => {
+                    setAgreedToTerms(e.target.checked)
+                    if (e.target.checked) setFieldErrors(p => ({ ...p, terms: undefined }))
+                  }}
+                />
+                {' '}I agree to the <a href="#" className="terms-link">Terms of Service</a> and <a href="#" className="terms-link">Privacy Policy</a>
               </label>
+              {fieldErrors.terms && <span className="field-error">{fieldErrors.terms}</span>}
             </div>
 
             <button className="btn btn-coral btn-full btn-lg" type="submit" disabled={loading}>

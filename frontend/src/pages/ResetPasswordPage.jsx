@@ -46,14 +46,17 @@ export default function ResetPasswordPage() {
 
     if (!password) {
       setError('Password is required.')
+      setTimeout(() => setError(''), 5000)
       return
     }
     if (password.length < 8) {
       setError('Password must be at least 8 characters.')
+      setTimeout(() => setError(''), 5000)
       return
     }
     if (password !== confirm) {
       setError('Passwords do not match.')
+      setTimeout(() => setError(''), 5000)
       return
     }
 
@@ -67,6 +70,7 @@ export default function ResetPasswordPage() {
       setTimeout(() => navigate('/login'), 3000)
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to reset password. The link may have expired.')
+      setTimeout(() => setError(''), 5000)
     } finally {
       setLoading(false)
     }
