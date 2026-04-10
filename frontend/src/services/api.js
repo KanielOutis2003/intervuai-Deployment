@@ -3,6 +3,7 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
+  timeout: 60000, // 60s — Render free tier can take up to 50s to cold-start
 })
 
 // Attach token on every request (checks both storages to support rememberMe)
