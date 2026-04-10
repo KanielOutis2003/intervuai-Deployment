@@ -140,7 +140,12 @@ export default function DashboardPage() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const handleLogout = async () => {
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  const handleLogout = () => setShowLogoutModal(true)
+
+  const confirmLogout = async () => {
+    setShowLogoutModal(false)
     await logout()
     navigate('/login')
   }
@@ -926,6 +931,37 @@ export default function DashboardPage() {
 
             <div style={{marginTop:32,display:'flex',justifyContent:'flex-end'}}>
               <button className="btn btn-coral" onClick={() => setShowSettingsModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogoutModal && (
+        <div
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100}}
+          onClick={e => { if (e.target === e.currentTarget) setShowLogoutModal(false) }}
+        >
+          <div style={{background:'var(--card)',borderRadius:18,padding:36,width:400,boxShadow:'0 8px 40px rgba(0,0,0,0.2)',textAlign:'center'}}>
+            <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,#ff6b6b22,#ff6b6b11)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px',fontSize:28}}>
+              👋
+            </div>
+            <h3 style={{fontFamily:'var(--font-head)',fontSize:20,fontWeight:700,marginBottom:8}}>Sign Out</h3>
+            <p style={{color:'var(--text-muted)',fontSize:14,marginBottom:28}}>Are you sure you want to sign out of your account?</p>
+            <div style={{display:'flex',gap:12,justifyContent:'center'}}>
+              <button
+                className="btn btn-ghost"
+                style={{flex:1,padding:'10px 0',borderRadius:10}}
+                onClick={() => setShowLogoutModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-coral"
+                style={{flex:1,padding:'10px 0',borderRadius:10}}
+                onClick={confirmLogout}
+              >
+                Yes, Sign Out
+              </button>
             </div>
           </div>
         </div>
