@@ -1,5 +1,6 @@
 """Authentication service for user registration, login, and password management."""
 
+import os
 from typing import Dict, Any
 from app.config.supabase_client import supabase, supabase_admin
 from app.utils.responses import APIError
@@ -31,11 +32,13 @@ class AuthService:
                 user_metadata['full_name'] = full_name
 
             # Register user via Supabase Auth
+            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
             response = supabase.auth.sign_up({
                 "email": email,
                 "password": password,
                 "options": {
-                    "data": user_metadata
+                    "data": user_metadata,
+                    "email_redirect_to": f"{frontend_url}/login"
                 }
             })
 
@@ -192,7 +195,12 @@ class AuthService:
             APIError: If password reset email fails
         """
         try:
-            supabase.auth.reset_password_email(email)
+            frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+            redirect_url = f"{frontend_url}/reset-password"
+
+            supabase.auth.reset_password_email(email, {
+                "redirect_to": redirect_url
+            })
 
             return {"message": "Password reset email sent successfully"}
         except Exception as e:

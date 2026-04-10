@@ -65,8 +65,21 @@ export function AuthProvider({ children }) {
     storage.setItem('user', JSON.stringify(updatedUser))
   }
 
+  // OAuth sign-in — redirects to provider
+  const signInWithOAuth = async (provider) => {
+    try {
+      await authService.signInWithOAuth(provider)
+      return { success: true }
+    } catch (err) {
+      return {
+        success: false,
+        error: err.message || `${provider} sign-in failed. Please try again.`,
+      }
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated, tryRefresh, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated, tryRefresh, updateUser, signInWithOAuth }}>
       {children}
     </AuthContext.Provider>
   )

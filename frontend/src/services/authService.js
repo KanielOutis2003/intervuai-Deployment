@@ -1,4 +1,5 @@
 import api from './api'
+import { supabase } from '../config/supabase'
 
 // Helper: resolve which storage is currently holding tokens
 function detectStorage() {
@@ -83,6 +84,50 @@ const authService = {
       localStorage.getItem('access_token') ||
       sessionStorage.getItem('access_token')
     )
+  },
+
+  // OAuth — redirect to provider sign-in page
+  async signInWithOAuth(provider) {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    if (error) throw error
+  },
+
+  // Handle OAuth callback — exchange hash tokens, fetch profile, store session
+  async handleOAuthCallback() {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) throw error
+    if (!data.session) throw new Error('No session returned from OAuth')
+
+    const session = data.session
+    const user = session.user
+
+    // Store tokens in localStorage (OAuth users get "remember me" by default)
+    localStorage.setItem('access_token', session.access_token)
+    localStorage.setItem('refresh_token', session.refresh_token)
+
+    // Ensure user_profiles row exists (backend may not have created one for OAuth users)
+    try {
+      await api.get('/users/me')
+    } catch (_) {
+      // Profile will be auto-created on first authenticated request if needed
+    }
+
+    // Fetch profile from backend to get role
+    let profile = { id: user.id, email: user.email, full_name: null, role: 'user' }
+    try {
+      const res = await api.get('/users/me')
+      if (res.data?.data) {
+        profile = res.data.data
+      }
+    } catch (_) {}
+
+    localStorage.setItem('user', JSON.stringify(profile))
+    return { user: profile, session }
   },
 }
 

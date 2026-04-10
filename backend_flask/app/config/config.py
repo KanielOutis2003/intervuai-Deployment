@@ -38,8 +38,15 @@ class Config:
     # Data retention policy
     DATA_RETENTION_DAYS = int(os.getenv('DATA_RETENTION_DAYS', '90'))
 
-    # CORS
-    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5173']
+    # Frontend URL (for Supabase email redirect links)
+    FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+
+    # CORS — set CORS_ORIGINS env var to a comma-separated list for production
+    # e.g. "https://intervuai.vercel.app,https://www.intervuai.com"
+    CORS_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:5173').split(',')
+    ]
 
     @staticmethod
     def validate():
