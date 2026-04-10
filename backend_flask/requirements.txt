@@ -1,0 +1,32 @@
+# Flask Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Database & Authentication
+supabase>=2.7.0
+python-dotenv==1.0.0
+
+# AI/ML Integration
+openai>=2.21.0
+google-genai>=1.0.0
+groq>=1.0.0
+requests==2.31.0
+
+# Input Validation
+marshmallow==3.20.1
+
+# Encryption (data at rest — Fernet/AES-128)
+cryptography==42.0.5
+
+# HTTP Client (managed by supabase)
+# httpx is a dependency of supabase
+
+# Production Server
+gunicorn==21.2.0
+
+# Development
+python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.0
+pytest-mock==3.12.0
