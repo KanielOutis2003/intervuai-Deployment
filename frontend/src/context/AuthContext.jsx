@@ -15,10 +15,15 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       return { success: true }
     } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Login failed. Please check your credentials.',
+      let message = 'Login failed. Please check your credentials.'
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        message = 'Server is waking up — please wait a moment and try again.'
+      } else if (err.response?.data?.error) {
+        message = err.response.data.error
+      } else if (!err.response && err.message) {
+        message = 'Unable to reach the server. Please check your connection and try again.'
       }
+      return { success: false, error: message }
     } finally {
       setLoading(false)
     }
@@ -30,10 +35,15 @@ export function AuthProvider({ children }) {
       const data = await authService.register(email, password, fullName)
       return { success: true, data }
     } catch (err) {
-      return {
-        success: false,
-        error: err.response?.data?.error || 'Registration failed. Please try again.',
+      let message = 'Registration failed. Please try again.'
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        message = 'Server is waking up — please wait a moment and try again.'
+      } else if (err.response?.data?.error) {
+        message = err.response.data.error
+      } else if (!err.response && err.message) {
+        message = 'Unable to reach the server. Please check your connection and try again.'
       }
+      return { success: false, error: message }
     } finally {
       setLoading(false)
     }

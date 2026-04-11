@@ -293,6 +293,7 @@ export default function LoginPage() {
   const [agreedToTerms, setAggedToTermsInternal] = useState(IS_TEST ? true : false)
   const setAgreedToTerms = (v) => setAggedToTermsInternal(v)
   const [showTermsModal, setShowTermsModal] = useState(false)
+  const [slowWarning, setSlowWarning] = useState(false)
 
   function validate() {
     const errs = {}
@@ -321,12 +322,15 @@ export default function LoginPage() {
     }
     setFieldErrors({})
     setServerError('')
+    setSlowWarning(false)
+    const slowTimer = setTimeout(() => setSlowWarning(true), 8000)
     const result = await login(form.email, form.password, rememberMe)
+    clearTimeout(slowTimer)
+    setSlowWarning(false)
     if (result.success) {
       navigate('/dashboard')
     } else {
       setServerError(result.error)
-      setTimeout(() => setServerError(''), 5000)
     }
   }
 
@@ -497,7 +501,11 @@ export default function LoginPage() {
               disabled={loading}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
-              {loading ? <><Spinner /> Signing in…</> : 'Sign In'}
+              {loading
+                ? slowWarning
+                  ? <><Spinner /> Server is waking up, please wait…</>
+                  : <><Spinner /> Signing in…</>
+                : 'Sign In'}
             </button>
           </form>
 

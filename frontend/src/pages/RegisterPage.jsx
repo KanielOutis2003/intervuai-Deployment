@@ -41,6 +41,7 @@ export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [slowWarning, setSlowWarning] = useState(false)
 
   const strength = getPasswordStrength(form.password)
 
@@ -81,13 +82,16 @@ export default function RegisterPage() {
     }
     setFieldErrors({})
     setServerError('')
+    setSlowWarning(false)
+    const slowTimer = setTimeout(() => setSlowWarning(true), 8000)
     const result = await register(form.email, form.password, form.fullName)
+    clearTimeout(slowTimer)
+    setSlowWarning(false)
     if (result.success) {
       setSuccess('Account created! Please check your email to verify, then sign in.')
       setTimeout(() => navigate('/login'), 3000)
     } else {
       setServerError(result.error)
-      setTimeout(() => setServerError(''), 5000)
     }
   }
 
@@ -244,7 +248,11 @@ export default function RegisterPage() {
             </div>
 
             <button className="btn btn-coral btn-full btn-lg" type="submit" disabled={loading}>
-              {loading ? 'Creating account…' : 'Create Free Account →'}
+              {loading
+                ? slowWarning
+                  ? 'Server is waking up, please wait…'
+                  : 'Creating account…'
+                : 'Create Free Account →'}
             </button>
           </form>
 
