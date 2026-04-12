@@ -6,9 +6,14 @@ from app.config.config import Config
 from app.utils.responses import APIError
 
 
+_openai_client: OpenAI | None = None
+
 def get_openai_client():
-    """Get OpenAI client instance."""
-    return OpenAI(api_key=Config.OPENAI_API_KEY)
+    """Get or create a reusable OpenAI client instance."""
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    return _openai_client
 
 
 class OpenAIService:

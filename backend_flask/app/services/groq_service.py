@@ -7,6 +7,15 @@ from app.config.config import Config
 
 logger = logging.getLogger(__name__)
 
+# Reuse a single Groq client (avoids re-creating SSL connections per request)
+_groq_client: Groq | None = None
+
+def _get_groq_client() -> Groq:
+    global _groq_client
+    if _groq_client is None:
+        _groq_client = Groq(api_key=Config.GROQ_API_KEY)
+    return _groq_client
+
 # In-memory session store: { session_id: [{'role': 'user'/'assistant', 'content': '...'}] }
 _sessions: dict[str, list[dict]] = {}
 # Per-session custom system prompts (set when interview type is known)
@@ -196,7 +205,7 @@ class GroqService:
         Maintains per-session conversation history so Groq can follow the
         interview flow across multiple turns.
         """
-        client = Groq(api_key=Config.GROQ_API_KEY)
+        client = _get_groq_client()
         messages = GroqService._build_messages(session_id, user_message)
 
         try:
@@ -230,7 +239,7 @@ class GroqService:
         The caller (Flask route) should wrap this in stream_with_context and
         return it as a text/event-stream Response.
         """
-        client = Groq(api_key=Config.GROQ_API_KEY)
+        client = _get_groq_client()
         messages = GroqService._build_messages(session_id, user_message)
         accumulated = ''
 

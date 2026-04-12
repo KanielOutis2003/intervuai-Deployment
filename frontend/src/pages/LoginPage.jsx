@@ -331,6 +331,7 @@ export default function LoginPage() {
       navigate('/dashboard')
     } else {
       setServerError(result.error)
+      setTimeout(() => setServerError(''), 5000)
     }
   }
 

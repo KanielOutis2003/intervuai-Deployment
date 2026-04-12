@@ -43,8 +43,8 @@ def synthesize():
     user_id = g.user['id']
 
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=Config.OPENAI_API_KEY)
+        from app.services.openai_service import get_openai_client
+        client = get_openai_client()
 
         response = client.audio.speech.create(
             model=Config.TTS_MODEL,

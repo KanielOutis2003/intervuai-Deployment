@@ -4,6 +4,7 @@ from typing import Dict, Any, List, Optional
 from app.config.config import Config
 from app.config.supabase_client import supabase_admin
 from app.utils.responses import APIError
+from app.services.openai_service import get_openai_client
 import openai
 
 
@@ -28,8 +29,7 @@ class WhisperService:
             APIError: If transcription fails
         """
         try:
-            # Initialize OpenAI client
-            client = openai.OpenAI(api_key=Config.OPENAI_API_KEY)
+            client = get_openai_client()
 
             # Prepare transcription request
             transcribe_params = {

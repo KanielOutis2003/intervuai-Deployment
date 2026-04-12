@@ -1,6 +1,5 @@
 """Authentication middleware."""
 import logging
-from datetime import datetime
 from functools import wraps
 from flask import request, jsonify, g
 from app.config.supabase_client import supabase, supabase_admin
@@ -49,14 +48,6 @@ def _verify_token(token):
         # Check if user is blocked
         if profile.get('is_blocked', False):
             raise ValueError('Your account has been suspended. Please contact support.')
-
-        # Update last_active_at (fire-and-forget)
-        try:
-            supabase_admin.table('user_profiles').update({
-                'last_active_at': datetime.utcnow().isoformat()
-            }).eq('user_id', user.user.id).execute()
-        except Exception:
-            pass
 
     return user.user, user_role, full_name
 

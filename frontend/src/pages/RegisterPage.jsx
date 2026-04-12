@@ -92,6 +92,7 @@ export default function RegisterPage() {
       setTimeout(() => navigate('/login'), 3000)
     } else {
       setServerError(result.error)
+      setTimeout(() => setServerError(''), 5000)
     }
   }
 
