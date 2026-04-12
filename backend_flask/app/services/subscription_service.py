@@ -90,25 +90,11 @@ class SubscriptionService:
             if not response.data:
                 raise APIError("Failed to create subscription", 500)
 
-            # Promote user role to premium — check response to confirm the row was found
-            role_resp = supabase_admin.table('user_profiles').update(
+            # Promote user role to premium
+            supabase_admin.table('user_profiles').update(
                 {'role': 'premium'}
-            ).eq('user_id', str(user_id)).select().execute()
-
-            if not role_resp.data:
-                # Row not found by user_id — log and attempt by profile id as fallback
-                logger.warning('[subscribe] role update matched 0 rows for user_id=%s', user_id)
-                # Try fetching the profile id explicitly and retrying
-                profile = supabase_admin.table('user_profiles').select('id').eq('user_id', str(user_id)).execute()
-                if profile.data:
-                    supabase_admin.table('user_profiles').update(
-                        {'role': 'premium'}
-                    ).eq('id', str(profile.data[0]['id'])).select().execute()
-                    logger.info('[subscribe] role update succeeded via profile.id for user_id=%s', user_id)
-                else:
-                    logger.error('[subscribe] user_profiles row not found at all for user_id=%s', user_id)
-            else:
-                logger.info('[subscribe] role updated to premium for user_id=%s', user_id)
+            ).eq('user_id', str(user_id)).execute()
+            logger.info('[subscribe] role updated to premium for user_id=%s', user_id)
 
             s = response.data[0]
             return {
@@ -133,14 +119,10 @@ class SubscriptionService:
                 raise APIError("No active subscription found", 404)
 
             # Revert user role back to standard user
-            role_resp = supabase_admin.table('user_profiles').update(
+            supabase_admin.table('user_profiles').update(
                 {'role': 'user'}
-            ).eq('user_id', str(user_id)).select().execute()
-
-            if not role_resp.data:
-                logger.warning('[cancel] role revert matched 0 rows for user_id=%s', user_id)
-            else:
-                logger.info('[cancel] role reverted to user for user_id=%s', user_id)
+            ).eq('user_id', str(user_id)).execute()
+            logger.info('[cancel] role reverted to user for user_id=%s', user_id)
 
             return {"message": "Subscription cancelled successfully"}
         except APIError:

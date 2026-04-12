@@ -6,6 +6,7 @@ import { startInterview, sendToFlowise } from '../services/flowiseService'
 import useTTS from '../hooks/useTTS'
 import useVisionAI from '../hooks/useVisionAI'
 import AvatarCanvas from '../components/AvatarCanvas'
+import ConfirmModal from '../components/ConfirmModal'
 import PreFlight from '../components/Interview/PreFlight'
 
 /* ── Phase-specific coaching tips ─────────────────────────────────────────── */
@@ -61,6 +62,9 @@ export default function VideoInterviewPage() {
   const [answer, setAnswer] = useState('')
   const [aiLoading, setAiLoading] = useState(true)
   const [questionCount, setQuestionCount] = useState(0)
+
+  // Modal state
+  const [vModal, setVModal] = useState({ open: false })
 
   // Avatar toggle
   const [showAvatar, setShowAvatar] = useState(() => localStorage.getItem('intervuai_show_avatar') !== 'false')
@@ -277,7 +281,7 @@ export default function VideoInterviewPage() {
   // ── Voice input ────────────────────────────────────────────────────────────
   const toggleVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { alert('Voice input is not supported in this browser. Please use Chrome or Edge.'); return }
+    if (!SR) { setVModal({ open: true, title: 'Browser Not Supported', message: 'Voice input is not supported in this browser. Please use Chrome or Edge.', variant: 'warning', alertOnly: true }); return }
     if (isListening) {
       try { recognitionRef.current?.stop?.() } catch {}
       setIsListening(false)
@@ -309,7 +313,7 @@ export default function VideoInterviewPage() {
       const reason = e?.error || ''
       if (reason === 'not-allowed') {
         setIsListening(false); setLiveSpeech('')
-        alert('Microphone permission is blocked. Please allow mic access.')
+        setVModal({ open: true, title: 'Microphone Blocked', message: 'Microphone permission is blocked. Please allow mic access in your browser settings.', variant: 'danger', alertOnly: true })
         return
       }
       if (!isComplete) setTimeout(() => { try { recognition.start() } catch {} }, 200)
@@ -353,7 +357,7 @@ export default function VideoInterviewPage() {
       } catch {}
     }
     recognitionRef.current = recognition
-    try { recognition.start() } catch { alert('Unable to start voice input.') }
+    try { recognition.start() } catch { setVModal({ open: true, title: 'Voice Error', message: 'Unable to start voice input.', variant: 'warning', alertOnly: true }) }
   }
 
   // ── Toggle mute / camera ───────────────────────────────────────────────────
@@ -531,10 +535,7 @@ export default function VideoInterviewPage() {
   }
 
   // ── End / Back ─────────────────────────────────────────────────────────────
-  const handleEnd = async () => {
-    if (!isComplete) {
-      if (!window.confirm("You are in an active interview. Are you sure you want to end it?")) return
-    }
+  const doEndVideo = useCallback(async () => {
     tts.stop()
     if (typewriterRef.current) clearInterval(typewriterRef.current)
     if (countdownRef.current) clearInterval(countdownRef.current)
@@ -544,14 +545,22 @@ export default function VideoInterviewPage() {
     if (isComplete) await new Promise(r => setTimeout(r, 600))
     if (sessionId) await interviewService.endSession(sessionId).catch(() => {})
     navigate(isComplete ? `/interview/${interviewId}/report` : '/dashboard')
+  }, [interviewId, sessionId, isComplete, navigate, tts, stopCamera])
+
+  const handleEnd = () => {
+    if (!isComplete) {
+      setVModal({ open: true, type: 'endSession' })
+    } else {
+      doEndVideo()
+    }
   }
 
   const handleBack = () => {
-    if (!isComplete && !window.confirm("Leaving now will end the session. Continue?")) return
-    tts.stop()
-    stopCamera()
-    try { recognitionRef.current?.stop?.() } catch {}
-    navigate('/dashboard')
+    if (!isComplete) {
+      setVModal({ open: true, type: 'leaveSession' })
+    } else {
+      tts.stop(); stopCamera(); try { recognitionRef.current?.stop?.() } catch {}; navigate('/dashboard')
+    }
   }
 
   // ── Derived display values ─────────────────────────────────────────────────
@@ -604,6 +613,31 @@ export default function VideoInterviewPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="video-page-wrapper">
+      {/* Confirm / Alert modals */}
+      <ConfirmModal
+        isOpen={vModal.open && vModal.type === 'endSession'}
+        title="End Interview Session?"
+        message="Your progress will be saved but you won't get a full evaluation."
+        confirmLabel="End Session" cancelLabel="Keep Going" variant="warning" icon="⏹️"
+        onConfirm={() => { setVModal({ open: false }); doEndVideo() }}
+        onCancel={() => setVModal({ open: false })}
+      />
+      <ConfirmModal
+        isOpen={vModal.open && vModal.type === 'leaveSession'}
+        title="Leave Interview?"
+        message="Leaving now will end the session."
+        confirmLabel="Leave" cancelLabel="Stay" variant="danger" icon="🚪"
+        onConfirm={() => { setVModal({ open: false }); tts.stop(); stopCamera(); try { recognitionRef.current?.stop?.() } catch {}; navigate('/dashboard') }}
+        onCancel={() => setVModal({ open: false })}
+      />
+      <ConfirmModal
+        isOpen={vModal.open && vModal.alertOnly}
+        title={vModal.title || 'Notice'} message={vModal.message || ''}
+        confirmLabel="Got it" variant={vModal.variant || 'info'} alertOnly
+        onConfirm={() => setVModal({ open: false })}
+        onCancel={() => setVModal({ open: false })}
+      />
+
       {/* PreFlight gate */}
       {showPreFlight && (
         <PreFlight

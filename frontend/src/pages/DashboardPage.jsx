@@ -7,6 +7,7 @@ import interviewService from '../services/interviewService'
 import userService from '../services/userService'
 import UpgradeModal from '../components/UpgradeModal'
 import AppTour from '../components/AppTour'
+import ConfirmModal from '../components/ConfirmModal'
 
 const LogoIcon = () => (
   <div className="nav-logo-icon">
@@ -81,6 +82,9 @@ export default function DashboardPage() {
     (!m.adminOnly || user?.role === 'admin') &&
     m.name.toLowerCase().includes(moduleSearch.toLowerCase())
   )
+
+  // Confirm/alert modal state
+  const [cfModal, setCfModal] = useState({ open: false })
 
   // Searchable dropdown state
   const [roleSearch, setRoleSearch] = useState('')
@@ -175,7 +179,7 @@ export default function DashboardPage() {
         closeModal()
         setShowUpgradeModal(true)
       } else {
-        alert(err.response?.data?.error || err.message || 'Failed to create interview. Please try again.')
+        setCfModal({ open: true, title: 'Interview Error', message: err.response?.data?.error || err.message || 'Failed to create interview. Please try again.', variant: 'danger', alertOnly: true })
       }
     } finally {
       setCreating(false)
@@ -214,20 +218,25 @@ export default function DashboardPage() {
   // Admins go directly to admin panel — they should not see the user dashboard
   if (user?.role === 'admin') return <Navigate to="/admin" replace />
 
-  const handleDeleteInterview = async (e, id) => {
+  const handleDeleteInterview = (e, id) => {
     e.stopPropagation()
-    if (!window.confirm('Delete this interview session? This cannot be undone.')) return
-    setDeletingId(id)
-    try {
-      await interviewService.deleteInterview(id)
-      setInterviews(prev => prev.filter(iv => iv.id !== id))
-      // Refresh dashboard KPIs
-      interviewService.getDashboard().then(setDashboard).catch(() => {})
-    } catch {
-      alert('Failed to delete. Please try again.')
-    } finally {
-      setDeletingId(null)
-    }
+    setCfModal({
+      open: true, title: 'Delete Interview?', message: 'This interview session will be permanently deleted. This cannot be undone.',
+      variant: 'danger', icon: '🗑️', confirmLabel: 'Delete', cancelLabel: 'Keep',
+      onConfirm: async () => {
+        setCfModal({ open: false })
+        setDeletingId(id)
+        try {
+          await interviewService.deleteInterview(id)
+          setInterviews(prev => prev.filter(iv => iv.id !== id))
+          interviewService.getDashboard().then(setDashboard).catch(() => {})
+        } catch {
+          setCfModal({ open: true, title: 'Delete Failed', message: 'Failed to delete. Please try again.', variant: 'danger', alertOnly: true })
+        } finally {
+          setDeletingId(null)
+        }
+      },
+    })
   }
 
   const initials = user?.email ? user.email[0].toUpperCase() : 'U'
@@ -859,14 +868,17 @@ export default function DashboardPage() {
                           background:'rgba(229,62,62,0.1)',border:'1px solid rgba(229,62,62,0.35)',
                           color:'#e53e3e',borderRadius:8,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600,whiteSpace:'nowrap',
                         }}
-                        onClick={async () => {
-                          if (!window.confirm('Cancel your Premium subscription? You will lose access to premium features immediately.')) return
-                          try {
-                            await cancelSubscription()
-                            setShowSettingsModal(false)
-                          } catch {
-                            alert('Failed to cancel subscription. Please try again.')
-                          }
+                        onClick={() => {
+                          setCfModal({
+                            open: true, title: 'Cancel Subscription?',
+                            message: 'You will lose access to premium features immediately. Are you sure?',
+                            variant: 'danger', icon: '💎', confirmLabel: 'Cancel Plan', cancelLabel: 'Keep Plan',
+                            onConfirm: async () => {
+                              setCfModal({ open: false })
+                              try { await cancelSubscription(); setShowSettingsModal(false) }
+                              catch { setCfModal({ open: true, title: 'Error', message: 'Failed to cancel subscription. Please try again.', variant: 'danger', alertOnly: true }) }
+                            },
+                          })
                         }}
                       >
                         Cancel Plan
@@ -966,6 +978,20 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Beautiful confirm/alert modal */}
+      <ConfirmModal
+        isOpen={cfModal.open}
+        title={cfModal.title}
+        message={cfModal.message}
+        confirmLabel={cfModal.confirmLabel || 'OK'}
+        cancelLabel={cfModal.cancelLabel || 'Cancel'}
+        variant={cfModal.variant || 'warning'}
+        icon={cfModal.icon}
+        alertOnly={cfModal.alertOnly}
+        onConfirm={cfModal.onConfirm || (() => setCfModal({ open: false }))}
+        onCancel={() => setCfModal({ open: false })}
+      />
     </div>
   )
 }
