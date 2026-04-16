@@ -48,7 +48,7 @@ function getGreeting() {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, updateUser } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const { isPremium, subscription, cancel: cancelSubscription } = useSubscription()
   const [dashboard, setDashboard] = useState(null)
@@ -247,6 +247,34 @@ export default function DashboardPage() {
   const [profileExt, setProfileExt] = useState({ targetIndustry: '', experienceLevel: '', resumeUrl: '' })
   const [profileExtSaving, setProfileExtSaving] = useState(false)
   const [profileExtSaved, setProfileExtSaved] = useState(false)
+
+  // Full name inline edit state
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editedName, setEditedName] = useState('')
+  const [nameSaving, setNameSaving] = useState(false)
+  const [nameError, setNameError] = useState('')
+
+  const handleEditName = () => {
+    setEditedName(fullName)
+    setNameError('')
+    setIsEditingName(true)
+  }
+
+  const handleSaveName = async () => {
+    const trimmed = editedName.trim()
+    if (!trimmed) { setNameError('Name cannot be empty.'); return }
+    setNameSaving(true)
+    setNameError('')
+    try {
+      await userService.updateProfile({ full_name: trimmed })
+      updateUser({ full_name: trimmed })
+      setIsEditingName(false)
+    } catch (err) {
+      setNameError(err.response?.data?.error || 'Failed to update name.')
+    } finally {
+      setNameSaving(false)
+    }
+  }
 
   const loadProfileExt = () => {
     userService.getProfile().then(p => {
@@ -715,12 +743,39 @@ export default function DashboardPage() {
             <div style={{overflowY:'auto',flex:1}}>
               {settingsTab === 'profile' && (
                 <div>
-                  <div className="settings-row">
-                    <div className="settings-info">
-                      <h4>Full Name</h4>
-                      <p>{fullName}</p>
+                  <div className="settings-row" style={{flexDirection:'column',alignItems:'flex-start',gap:8}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%'}}>
+                      <div className="settings-info">
+                        <h4>Full Name</h4>
+                        {!isEditingName && <p>{fullName}</p>}
+                      </div>
+                      {!isEditingName && (
+                        <button className="btn btn-ghost btn-sm" onClick={handleEditName}>Edit</button>
+                      )}
                     </div>
-                    <button className="btn btn-ghost btn-sm">Edit</button>
+                    {isEditingName && (
+                      <div style={{width:'100%',display:'flex',flexDirection:'column',gap:8}}>
+                        <input
+                          type="text"
+                          value={editedName}
+                          onChange={e => { setEditedName(e.target.value); setNameError('') }}
+                          onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setIsEditingName(false) }}
+                          autoFocus
+                          style={{width:'100%',padding:'9px 12px',borderRadius:9,fontSize:13,
+                            border:`1.5px solid ${nameError ? 'var(--coral)' : 'var(--border)'}`,
+                            background:'var(--bg)',color:'var(--text)',outline:'none',boxSizing:'border-box'}}
+                        />
+                        {nameError && <p style={{fontSize:12,color:'var(--coral)',margin:0}}>{nameError}</p>}
+                        <div style={{display:'flex',gap:8}}>
+                          <button className="btn btn-teal btn-sm" onClick={handleSaveName} disabled={nameSaving}>
+                            {nameSaving ? 'Saving…' : 'Save'}
+                          </button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => setIsEditingName(false)} disabled={nameSaving}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="settings-row">
                     <div className="settings-info">
