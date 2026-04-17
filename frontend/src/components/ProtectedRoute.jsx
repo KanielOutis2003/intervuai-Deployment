@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, tryRefresh } = useAuth()
+  const location = useLocation()
   const [checking, setChecking] = useState(!isAuthenticated())
   const [allowed, setAllowed] = useState(isAuthenticated())
 
@@ -14,12 +15,14 @@ export default function ProtectedRoute({ children }) {
       return
     }
 
-    // Not authenticated — silently attempt a token refresh before redirecting
+    // No token — reset state and attempt a silent refresh before redirecting
+    setAllowed(false)
+    setChecking(true)
     tryRefresh().then((ok) => {
       setAllowed(ok)
       setChecking(false)
     })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.key]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (checking) {
     return (
@@ -43,9 +46,5 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
-  if (!allowed) {
-    return <Navigate to="/login" replace />
-  }
-
-  return children
+  return allowed ? children : <Navigate to="/login" replace />
 }
