@@ -1,12 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 import DemoModal from '../components/DemoModal'
 
 export default function LandingPage() {
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
+  const { clearSession } = useAuth()
   const [showDemo, setShowDemo] = useState(false)
+
+  // Clear any active session when the landing page mounts so that the browser
+  // forward button cannot bypass authentication back to a protected route.
+  useEffect(() => {
+    clearSession()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
