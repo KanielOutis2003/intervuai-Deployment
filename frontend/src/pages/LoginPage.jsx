@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -281,7 +281,13 @@ function Section({ num, title, children }) {
 // ── LoginPage ────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login, loading, signInWithOAuth } = useAuth()
+  const { login, clearSession, loading, signInWithOAuth } = useAuth()
+
+  // Clear any stale session when the login page mounts (e.g. user hit back).
+  // Uses clearSession (no API call) to avoid 401 retry loops when no token exists.
+  useEffect(() => {
+    clearSession()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const IS_TEST = typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test'
 
@@ -328,7 +334,7 @@ export default function LoginPage() {
     clearTimeout(slowTimer)
     setSlowWarning(false)
     if (result.success) {
-      navigate('/dashboard')
+      navigate('/dashboard', { replace: true })
     } else {
       setServerError(result.error)
       setTimeout(() => setServerError(''), 5000)

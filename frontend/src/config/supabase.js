@@ -7,7 +7,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase env vars missing — OAuth sign-in will not work.')
 }
 
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
-)
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null

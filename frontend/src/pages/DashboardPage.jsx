@@ -49,7 +49,7 @@ function getGreeting() {
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { user, logout, updateUser } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, colorBlindMode, setColorBlindMode } = useTheme()
   const { isPremium, subscription, cancel: cancelSubscription } = useSubscription()
   const [dashboard, setDashboard] = useState(null)
   const [stats, setStats] = useState(null)
@@ -151,7 +151,7 @@ export default function DashboardPage() {
   const confirmLogout = async () => {
     setShowLogoutModal(false)
     await logout()
-    navigate('/login')
+    navigate('/login', { replace: true })
   }
 
   const handleUpdatePreference = async (key, val) => {
@@ -247,6 +247,9 @@ export default function DashboardPage() {
   const [profileExt, setProfileExt] = useState({ targetIndustry: '', experienceLevel: '', resumeUrl: '' })
   const [profileExtSaving, setProfileExtSaving] = useState(false)
   const [profileExtSaved, setProfileExtSaved] = useState(false)
+  const [resumeUploading, setResumeUploading] = useState(false)
+  const [resumeUploadProgress, setResumeUploadProgress] = useState(0)
+  const [resumeUploadError, setResumeUploadError] = useState('')
 
   // Full name inline edit state
   const [isEditingName, setIsEditingName] = useState(false)
@@ -266,7 +269,7 @@ export default function DashboardPage() {
     setNameSaving(true)
     setNameError('')
     try {
-      await userService.updateProfile({ full_name: trimmed })
+      await userService.updateProfile({ fullName: trimmed })
       updateUser({ full_name: trimmed })
       setIsEditingName(false)
     } catch (err) {
@@ -299,6 +302,23 @@ export default function DashboardPage() {
       setTimeout(() => setProfileExtSaved(false), 2500)
     } catch { /* ignore */ }
     finally { setProfileExtSaving(false) }
+  }
+
+  const handleResumeFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setResumeUploadError('')
+    setResumeUploading(true)
+    setResumeUploadProgress(0)
+    try {
+      const result = await userService.uploadResume(file, setResumeUploadProgress)
+      setProfileExt(p => ({ ...p, resumeUrl: result.resumeUrl }))
+    } catch (err) {
+      setResumeUploadError(err.response?.data?.error || 'Upload failed. Please try again.')
+    } finally {
+      setResumeUploading(false)
+      e.target.value = ''
+    }
   }
 
   return (
@@ -829,9 +849,38 @@ export default function DashboardPage() {
                       </select>
                     </div>
 
-                    {/* Resume URL */}
+                    {/* Resume */}
                     <div>
-                      <label style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',display:'block',marginBottom:5}}>Resume URL <span style={{fontWeight:400}}>(Google Drive, Notion, etc.)</span></label>
+                      <label style={{fontSize:12,fontWeight:600,color:'var(--text-muted)',display:'block',marginBottom:5}}>Resume</label>
+
+                      {/* Upload from computer */}
+                      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                        <label style={{
+                          display:'inline-flex',alignItems:'center',gap:6,
+                          padding:'7px 14px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',
+                          background:'var(--teal)',color:'#fff',whiteSpace:'nowrap',
+                          opacity: resumeUploading ? 0.7 : 1,
+                          pointerEvents: resumeUploading ? 'none' : 'auto',
+                        }}>
+                          {resumeUploading ? `Uploading ${resumeUploadProgress}%…` : '↑ Upload File'}
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            style={{display:'none'}}
+                            onChange={handleResumeFileUpload}
+                          />
+                        </label>
+                        <span style={{fontSize:12,color:'var(--text-muted)'}}>PDF or Word · max 5 MB</span>
+                      </div>
+
+                      {resumeUploadError && (
+                        <p style={{fontSize:12,color:'var(--error,#e53e3e)',marginBottom:6}}>{resumeUploadError}</p>
+                      )}
+
+                      {/* Manual URL fallback */}
+                      <label style={{fontSize:12,color:'var(--text-muted)',display:'block',marginBottom:4}}>
+                        Or paste a URL <span style={{fontWeight:400}}>(Google Drive, Notion, etc.)</span>
+                      </label>
                       <input
                         type="url"
                         placeholder="https://…"
@@ -841,6 +890,12 @@ export default function DashboardPage() {
                           border:'1.5px solid var(--border)',background:'var(--bg)',color:'var(--text)',
                           outline:'none',boxSizing:'border-box'}}
                       />
+                      {profileExt.resumeUrl && (
+                        <a href={profileExt.resumeUrl} target="_blank" rel="noopener noreferrer"
+                          style={{fontSize:12,color:'var(--teal)',display:'inline-block',marginTop:4}}>
+                          View current resume ↗
+                        </a>
+                      )}
                     </div>
 
                     <button
@@ -972,6 +1027,26 @@ export default function DashboardPage() {
                       <p>Minimize animations and transitions</p>
                     </div>
                     <input type="checkbox" checked={preferences.reducedMotion} onChange={e => handleUpdatePreference('reducedMotion', e.target.checked)} />
+                  </div>
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <h4>Color Blind Mode</h4>
+                      <p>Apply color filters optimized for color vision deficiencies</p>
+                    </div>
+                    <select
+                      value={colorBlindMode}
+                      onChange={e => setColorBlindMode(e.target.value)}
+                      style={{
+                        padding: '6px 10px', borderRadius: 8, fontSize: 13,
+                        border: '1.5px solid var(--border)', background: 'var(--bg)',
+                        color: 'var(--text)', cursor: 'pointer',
+                      }}
+                    >
+                      <option value="none">None</option>
+                      <option value="protanopia">Protanopia (red-blind)</option>
+                      <option value="deuteranopia">Deuteranopia (green-blind)</option>
+                      <option value="tritanopia">Tritanopia (blue-blind)</option>
+                    </select>
                   </div>
                 </div>
               )}
