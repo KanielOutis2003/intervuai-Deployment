@@ -88,6 +88,7 @@ const authService = {
 
   // OAuth — redirect to provider sign-in page
   async signInWithOAuth(provider) {
+    if (!supabase) throw new Error('OAuth is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.')
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -99,6 +100,7 @@ const authService = {
 
   // Handle OAuth callback — exchange hash tokens, fetch profile, store session
   async handleOAuthCallback() {
+    if (!supabase) throw new Error('OAuth is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.')
     const { data, error } = await supabase.auth.getSession()
     if (error) throw error
     if (!data.session) throw new Error('No session returned from OAuth')

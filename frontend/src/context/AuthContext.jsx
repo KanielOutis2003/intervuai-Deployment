@@ -54,6 +54,18 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  // Clears local session without hitting the API — safe to call from LoginPage
+  // mount where there may be no valid token (avoids 401 retry loops)
+  const clearSession = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
+    sessionStorage.removeItem('access_token')
+    sessionStorage.removeItem('refresh_token')
+    sessionStorage.removeItem('user')
+    setUser(null)
+  }
+
   // Silently try to refresh the token; returns true on success, false on failure
   const tryRefresh = async () => {
     try {
@@ -89,7 +101,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated, tryRefresh, updateUser, signInWithOAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, clearSession, isAuthenticated, tryRefresh, updateUser, signInWithOAuth }}>
       {children}
     </AuthContext.Provider>
   )
