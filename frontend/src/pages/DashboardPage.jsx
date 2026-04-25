@@ -1092,14 +1092,14 @@ export default function DashboardPage() {
             <div style={{display:'flex',gap:12,justifyContent:'center'}}>
               <button
                 className="btn btn-ghost"
-                style={{flex:1,padding:'10px 0',borderRadius:10}}
+                style={{flex:1,padding:'10px 0',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}
                 onClick={() => setShowLogoutModal(false)}
               >
                 Cancel
               </button>
               <button
                 className="btn btn-coral"
-                style={{flex:1,padding:'10px 0',borderRadius:10}}
+                style={{flex:1,padding:'10px 0',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}
                 onClick={confirmLogout}
               >
                 Yes, Sign Out
