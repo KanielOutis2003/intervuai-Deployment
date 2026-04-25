@@ -57,6 +57,10 @@ export default function RegisterPage() {
       errs.password = 'Password is required.'
     } else if (form.password.length < 8) {
       errs.password = 'Password must be at least 8 characters.'
+    } else if (!/[0-9]/.test(form.password)) {
+      errs.password = 'Password must include at least one number.'
+    } else if (!/[^A-Za-z0-9]/.test(form.password)) {
+      errs.password = 'Password must include at least one special character (e.g. !@#$%).'
     }
     if (!form.confirm) {
       errs.confirm = 'Please confirm your password.'
@@ -206,6 +210,20 @@ export default function RegisterPage() {
                   </div>
                   <span style={{ fontSize: 11, color: strength.color, fontWeight: 600 }}>{strength.label}</span>
                 </div>
+              )}
+              {/* Live requirements checklist */}
+              {form.password && (
+                <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {[
+                    ['At least 8 characters', form.password.length >= 8],
+                    ['At least one number', /[0-9]/.test(form.password)],
+                    ['At least one special character', /[^A-Za-z0-9]/.test(form.password)],
+                  ].map(([label, met]) => (
+                    <li key={label} style={{ fontSize: 11, color: met ? '#10b981' : '#6b7280', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ fontWeight: 700 }}>{met ? '✓' : '✗'}</span> {label}
+                    </li>
+                  ))}
+                </ul>
               )}
               {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
             </div>

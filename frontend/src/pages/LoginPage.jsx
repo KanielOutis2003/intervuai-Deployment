@@ -294,6 +294,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [fieldErrors, setFieldErrors] = useState({})
   const [serverError, setServerError] = useState('')
+  const [isNetworkError, setIsNetworkError] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
   const [agreedToTerms, setAggedToTermsInternal] = useState(IS_TEST ? true : false)
@@ -328,6 +329,7 @@ export default function LoginPage() {
     }
     setFieldErrors({})
     setServerError('')
+    setIsNetworkError(false)
     setSlowWarning(false)
     const slowTimer = setTimeout(() => setSlowWarning(true), 8000)
     const result = await login(form.email, form.password, rememberMe)
@@ -336,8 +338,10 @@ export default function LoginPage() {
     if (result.success) {
       navigate('/dashboard', { replace: true })
     } else {
+      const networkMsg = result.error?.includes('reach the server') || result.error?.includes('waking up')
+      setIsNetworkError(!!networkMsg)
       setServerError(result.error)
-      setTimeout(() => setServerError(''), 5000)
+      // No auto-dismiss — error stays until the user edits a field or retries
     }
   }
 
@@ -371,7 +375,20 @@ export default function LoginPage() {
           <h2>Welcome Back</h2>
           <p className="auth-sub">Sign in to continue your interview preparation</p>
 
-          {serverError && <div className="error-msg">{serverError}</div>}
+          {serverError && (
+            <div className="error-msg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <span>{serverError}</span>
+              {isNetworkError && (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  style={{ background: 'none', border: '1px solid currentColor', borderRadius: 6, padding: '3px 10px', fontSize: 12, cursor: 'pointer', color: 'inherit', whiteSpace: 'nowrap' }}
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} noValidate>
             {/* Email */}
@@ -382,7 +399,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@example.com"
                 value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
+                onChange={e => { setForm({ ...form, email: e.target.value }); setServerError(''); setIsNetworkError(false) }}
                 onBlur={() => {
                   const errs = validate()
                   setFieldErrors(prev => ({ ...prev, email: errs.email }))
@@ -405,7 +422,7 @@ export default function LoginPage() {
                   type={showPw ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  onChange={e => { setForm({ ...form, password: e.target.value }); setServerError(''); setIsNetworkError(false) }}
                   onBlur={() => {
                     const errs = validate()
                     setFieldErrors(prev => ({ ...prev, password: errs.password }))
