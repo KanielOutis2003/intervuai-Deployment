@@ -1089,17 +1089,15 @@ export default function DashboardPage() {
             </div>
             <h3 style={{fontFamily:'var(--font-head)',fontSize:20,fontWeight:700,marginBottom:8}}>Sign Out</h3>
             <p style={{color:'var(--text-muted)',fontSize:14,marginBottom:28}}>Are you sure you want to sign out of your account?</p>
-            <div style={{display:'flex',gap:12,justifyContent:'center'}}>
+            <div style={{display:'flex',gap:12,width:'fit-content',margin:'0 auto'}}>
               <button
                 className="btn btn-ghost"
-                style={{flex:1,padding:'10px 0',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}
                 onClick={() => setShowLogoutModal(false)}
               >
                 Cancel
               </button>
               <button
                 className="btn btn-coral"
-                style={{flex:1,padding:'10px 0',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}
                 onClick={confirmLogout}
               >
                 Yes, Sign Out
