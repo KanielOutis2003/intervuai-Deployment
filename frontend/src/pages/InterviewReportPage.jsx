@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { usePDF } from 'react-to-pdf'
 import interviewService from '../services/interviewService'
 
 const ScoreRing = ({ value, color, label }) => {
@@ -32,6 +33,7 @@ export default function InterviewReportPage() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { toPDF, targetRef } = usePDF({ filename: 'IntervuAI_Report.pdf' })
 
   useEffect(() => {
     if (!interviewId) return
@@ -109,7 +111,7 @@ export default function InterviewReportPage() {
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8,
+        <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 8,
           textDecoration: 'none', color: 'var(--text-primary)',
           fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>
           ⚡ IntervuAI
@@ -120,6 +122,9 @@ export default function InterviewReportPage() {
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')}>
             ← Dashboard
           </button>
+          <button className="btn btn-ghost btn-sm" onClick={() => toPDF()}>
+            ↓ Download PDF
+          </button>
           <button className="btn btn-coral btn-sm"
             onClick={() => navigate('/interview/chat')}>
             + New Interview
@@ -127,7 +132,7 @@ export default function InterviewReportPage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '32px 20px' }}>
+      <div ref={targetRef} style={{ maxWidth: 820, margin: '0 auto', padding: '32px 20px' }}>
 
         {/* Header card */}
         <div style={{ background: '#fff', borderRadius: 16, padding: 28,
@@ -351,6 +356,83 @@ export default function InterviewReportPage() {
                     <span>{tip}</span>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action Plan card */}
+        {finalSummary && (finalSummary.top_strengths?.length > 0 || finalSummary.areas_for_improvement?.length > 0) && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+            marginBottom: 20, border: '1px solid var(--border)' }}>
+            <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700,
+              margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+              📋 Action Plan
+              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text-muted)' }}>
+                — what to keep doing &amp; what to work on
+              </span>
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              {/* Strengths */}
+              {finalSummary.top_strengths?.length > 0 && (
+                <div style={{ background: '#f0fdf4', borderRadius: 12, padding: '14px 16px',
+                  border: '1.5px solid #bbf7d0' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d',
+                    marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.6,
+                    display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>✅</span> Keep Doing
+                  </div>
+                  {finalSummary.top_strengths.map((s, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 8,
+                      padding: '8px 10px', borderRadius: 8,
+                      background: '#dcfce7', marginBottom: 6,
+                      fontSize: 13, color: '#166534', lineHeight: 1.5,
+                    }}>
+                      <span style={{ color: '#16a34a', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                      {s}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Improvements */}
+              {finalSummary.areas_for_improvement?.length > 0 && (
+                <div style={{ background: '#fff7ed', borderRadius: 12, padding: '14px 16px',
+                  border: '1.5px solid #fed7aa' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c',
+                    marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.6,
+                    display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14 }}>🎯</span> Work On Next
+                  </div>
+                  {finalSummary.areas_for_improvement.map((a, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 8,
+                      padding: '8px 10px', borderRadius: 8,
+                      background: '#ffedd5', marginBottom: 6,
+                      fontSize: 13, color: '#9a3412', lineHeight: 1.5,
+                    }}>
+                      <span style={{ color: '#ea580c', fontWeight: 700, flexShrink: 0 }}>→</span>
+                      {a}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {finalSummary.coaching_tips?.length > 0 && (
+              <div style={{ marginTop: 14, background: '#f5f3ff', borderRadius: 12,
+                padding: '14px 16px', border: '1.5px solid #ddd6fe' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#6d28d9',
+                  marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+                  💡 Next Steps
+                </div>
+                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                  {finalSummary.coaching_tips.map((tip, i) => (
+                    <li key={i} style={{ fontSize: 13, color: '#5b21b6', lineHeight: 1.6,
+                      marginBottom: 4 }}>
+                      {tip}
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
           </div>

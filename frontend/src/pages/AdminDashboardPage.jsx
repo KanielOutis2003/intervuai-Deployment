@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { CSVLink } from 'react-csv'
 import adminService from '../services/adminService'
 import resourceService from '../services/resourceService'
 import userService from '../services/userService'
@@ -1491,7 +1492,7 @@ function ResourcesTab() {
   const [editing, setEditing]       = useState(null)
   const [saving, setSaving]         = useState(false)
   const [form, setForm] = useState({
-    title: '', category: '', resourceType: '', description: '', content: '', tags: '', difficulty: '',
+    title: '', category: '', resourceType: '', description: '', content: '', tags: '', difficulty: '', isPublished: true,
   })
 
   const TYPES = ['article', 'video', 'tip', 'guide', 'template']
@@ -1526,6 +1527,7 @@ function ResourcesTab() {
       content: r.content || '',
       tags: (r.tags || []).join(', '),
       difficulty: r.difficulty || '',
+      isPublished: r.isPublished !== false,
     })
     setMsg({ type: '', text: '' })
     setShowModal(true)
@@ -1542,6 +1544,7 @@ function ResourcesTab() {
       content: form.content || null,
       tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       difficulty: form.difficulty || null,
+      isPublished: form.isPublished,
     }
     try {
       if (editing) {
@@ -1604,7 +1607,7 @@ function ResourcesTab() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                {['Title', 'Type', 'Category', 'Difficulty', 'Reads', 'Created', ''].map(h => (
+                {['Title', 'Type', 'Category', 'Difficulty', 'Status', 'Reads', 'Created', ''].map(h => (
                   <th key={h} style={{ padding: '9px 12px', color: 'var(--text-muted)', fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 }}>{h}</th>
                 ))}
               </tr>
@@ -1621,6 +1624,22 @@ function ResourcesTab() {
                   </td>
                   <td style={{ padding: '11px 12px' }}>
                     {r.difficulty ? <span className={`tag ${r.difficulty === 'advanced' ? 'tag-coral' : r.difficulty === 'intermediate' ? 'tag-yellow' : 'tag-teal'}`}>{r.difficulty}</span> : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                  </td>
+                  <td style={{ padding: '11px 12px' }}>
+                    <button
+                      className={`tag ${r.isPublished !== false ? 'tag-teal' : 'tag-yellow'}`}
+                      style={{ cursor: 'pointer', border: 'none', background: 'none' }}
+                      title="Click to toggle Draft / Published"
+                      onClick={async () => {
+                        const next = r.isPublished === false
+                        try {
+                          await resourceService.updateResource(r.id, { isPublished: next })
+                          setResources(rs => rs.map(x => x.id === r.id ? { ...x, isPublished: next } : x))
+                        } catch { flash('error', 'Failed to update status.') }
+                      }}
+                    >
+                      {r.isPublished !== false ? 'Published' : 'Draft'}
+                    </button>
                   </td>
                   <td style={{ padding: '11px 12px', color: 'var(--text-muted)' }}>{r.readCount || 0}</td>
                   <td style={{ padding: '11px 12px', color: 'var(--text-muted)' }}>{fmt(r.createdAt)}</td>
@@ -1676,6 +1695,22 @@ function ResourcesTab() {
           <div className="form-group">
             <div className="form-label">Tags (comma-separated)</div>
             <input className="form-input" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="e.g. STAR, communication, leadership" />
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div className="form-label" style={{ marginBottom: 2 }}>Status</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                {form.isPublished ? 'Visible to users in the Resource Hub' : 'Hidden — only visible to admins'}
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`tag ${form.isPublished ? 'tag-teal' : 'tag-yellow'}`}
+              style={{ cursor: 'pointer', border: 'none', fontSize: 13, padding: '6px 14px' }}
+              onClick={() => setForm(f => ({ ...f, isPublished: !f.isPublished }))}
+            >
+              {form.isPublished ? '✓ Published' : '○ Draft'}
+            </button>
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
             <button className="btn btn-outline btn-sm" onClick={() => setShowModal(false)}>Cancel</button>
@@ -1825,6 +1860,15 @@ function AuditLogsTab() {
     return 'tag-purple'
   }
 
+  const csvData = logs.map(l => ({
+    Action: l.action || '',
+    ResourceType: l.resourceType || '',
+    ResourceId: l.resourceId || '',
+    UserId: l.userId || '',
+    IPAddress: l.ipAddress || '',
+    Timestamp: l.createdAt || '',
+  }))
+
   return (
     <SectionCard
       title={`📋 Audit Logs — ${total} entries`}
@@ -1835,6 +1879,14 @@ function AuditLogsTab() {
           <input style={inputStyle} placeholder="Resource type…" value={filter.resourceType}
             onChange={e => { setFilter(f => ({ ...f, resourceType: e.target.value })); setPage(0) }} />
           <button className="btn btn-outline btn-sm" onClick={() => { setPage(0); load() }}>↺</button>
+          <CSVLink
+            data={csvData}
+            filename={`audit_logs_${new Date().toISOString().slice(0, 10)}.csv`}
+            className="btn btn-outline btn-sm"
+            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+          >
+            ↓ CSV
+          </CSVLink>
         </div>
       }
     >

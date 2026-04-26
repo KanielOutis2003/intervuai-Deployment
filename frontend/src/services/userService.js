@@ -21,6 +21,18 @@ const userService = {
     return res.data.data
   },
 
+  async uploadResume(file, onProgress) {
+    const form = new FormData()
+    form.append('resume', file)
+    const res = await api.post('/users/me/resume', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: onProgress
+        ? (e) => onProgress(Math.round((e.loaded * 100) / e.total))
+        : undefined,
+    })
+    return res.data.data
+  },
+
   async getDashboard() {
     const res = await api.get('/users/me/dashboard')
     return res.data.data

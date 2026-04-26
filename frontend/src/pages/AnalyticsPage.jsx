@@ -56,7 +56,7 @@ export default function AnalyticsPage() {
     <div>
       {/* Nav */}
       <nav className="analytics-nav">
-        <Link to="/" className="nav-logo">
+        <Link to="/dashboard" className="nav-logo">
           <LogoIcon />
           <span className="nav-logo-text">IntervuAI</span>
         </Link>

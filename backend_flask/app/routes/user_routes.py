@@ -1,7 +1,9 @@
 """User profile and preferences routes."""
 
+import uuid
 from flask import Blueprint, request, g
 from app.services.user_service import UserService
+from app.config.supabase_client import supabase_admin
 from app.utils.validation import validate_request, UpdateProfileSchema, UpdatePreferencesSchema
 from app.utils.responses import success_response, error_response, APIError
 from app.middleware.auth import require_auth
@@ -119,6 +121,85 @@ def update_preferences():
         return error_response(e.message, e.status_code)
     except Exception as e:
         return error_response(f'Failed to update preferences: {str(e)}', 500)
+
+
+@user_bp.route('/me/resume', methods=['POST'])
+@require_auth
+def upload_resume():
+    """
+    Upload a resume file (PDF or DOCX) to Supabase Storage and save the URL.
+
+    Headers:
+        - Authorization: Bearer <access_token>
+
+    Request: multipart/form-data with field 'resume'
+
+    Returns:
+        200: { resumeUrl }
+        400: Missing or invalid file
+        500: Upload error
+    """
+    if 'resume' not in request.files:
+        return error_response('No file provided', 400)
+
+    file = request.files['resume']
+    if not file.filename:
+        return error_response('No file selected', 400)
+
+    allowed_types = {
+        'application/pdf': 'pdf',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+        'application/msword': 'doc',
+    }
+    content_type = file.content_type or ''
+    ext = allowed_types.get(content_type)
+    if not ext:
+        # Fallback: check filename extension
+        fname = file.filename.lower()
+        if fname.endswith('.pdf'):
+            ext = 'pdf'
+            content_type = 'application/pdf'
+        elif fname.endswith('.docx'):
+            ext = 'docx'
+            content_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif fname.endswith('.doc'):
+            ext = 'doc'
+            content_type = 'application/msword'
+        else:
+            return error_response('Only PDF or Word documents are allowed', 400)
+
+    try:
+        user_id = g.user['id']
+        file_bytes = file.read()
+
+        # Max 5 MB
+        if len(file_bytes) > 5 * 1024 * 1024:
+            return error_response('File size must be under 5 MB', 400)
+
+        # Ensure the bucket exists (create it if not)
+        try:
+            supabase_admin.storage.create_bucket('resumes', options={'public': True})
+        except Exception:
+            pass  # Already exists — ignore
+
+        storage_path = f"{user_id}/resume_{uuid.uuid4().hex[:8]}.{ext}"
+
+        supabase_admin.storage.from_('resumes').upload(
+            storage_path,
+            file_bytes,
+            {'content-type': content_type, 'upsert': 'true'},
+        )
+
+        public_url = supabase_admin.storage.from_('resumes').get_public_url(storage_path)
+
+        # Save URL to profile
+        UserService.update_profile(user_id=user_id, resume_url=public_url)
+
+        return success_response({'resumeUrl': public_url}, 'Resume uploaded successfully')
+    except APIError as e:
+        return error_response(e.message, e.status_code)
+    except Exception as e:
+        return error_response(f'Upload failed: {str(e)}', 500)
 
 
 @user_bp.route('/me/dashboard', methods=['GET'])

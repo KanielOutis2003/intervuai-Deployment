@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useLocation, Link } from 'react-router-dom'
 import interviewService from '../services/interviewService'
 import { startInterview, streamToFlowise } from '../services/flowiseService'
-import ConfirmModal from '../components/ConfirmModal'
 
 /* ── Phase-specific coaching tips ─────────────────────────────────────────── */
 const PHASE_TIPS = {
@@ -62,6 +61,7 @@ export default function ChatInterviewPage() {
   const [evaluation, setEvaluation] = useState(null)
   const [interviewPhase, setInterviewPhase] = useState('opening')
   const [isComplete, setIsComplete] = useState(false)
+  const [pendingComplete, setPendingComplete] = useState(false) // complete flagged but user hasn't sent final reply yet
   const [difficultyLevel, setDifficultyLevel] = useState('easy')
 
   // Score history for trend tracking
@@ -69,9 +69,6 @@ export default function ChatInterviewPage() {
     grammar: [], relevance: [], overall: [], confidence: [], clarity: [],
     structure: [], engagement: [],
   })
-
-  // Modal state for beautiful confirms/alerts
-  const [modal, setModal] = useState({ open: false, type: null })
 
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
@@ -166,6 +163,7 @@ export default function ChatInterviewPage() {
 
   const sendMessage = async () => {
     if (!input.trim() || sending || isComplete) return
+    const isFinalReply = pendingComplete
     const content = input.trim()
     setInput('')
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -207,7 +205,16 @@ export default function ChatInterviewPage() {
         }
         if (data.interview_phase) setInterviewPhase(data.interview_phase)
         if (data.difficulty_level) setDifficultyLevel(data.difficulty_level)
-        if (data.is_complete) setIsComplete(true)
+        if (data.is_complete) {
+          if (pendingComplete) {
+            // Second complete signal — fully lock now
+            setIsComplete(true)
+            setPendingComplete(false)
+          } else {
+            // First complete signal — keep input open for one final reply
+            setPendingComplete(true)
+          }
+        }
 
         const aiContent = data.is_complete
           ? (data.next_question || 'Great job completing the interview! Click "End & View Report" to see your detailed results.')
@@ -235,6 +242,11 @@ export default function ChatInterviewPage() {
         }).catch(() => {})
 
         if (data.is_complete) _saveScores(data)
+        // If this was the user's final reply after wrap-up, lock now regardless
+        if (isFinalReply) {
+          setIsComplete(true)
+          setPendingComplete(false)
+        }
         setSending(false)
       },
 
@@ -261,7 +273,7 @@ export default function ChatInterviewPage() {
   const toggleVoice = () => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) {
-      setModal({ open: true, type: 'alert', title: 'Browser Not Supported', message: 'Voice input is not supported in this browser. Please use Chrome or Edge.', variant: 'warning' })
+      alert('Voice input is not supported in this browser. Please use Chrome or Edge.')
       return
     }
     if (isListening) {
@@ -298,7 +310,7 @@ export default function ChatInterviewPage() {
       const reason = e?.error || ''
       if (reason === 'not-allowed') {
         setIsListening(false)
-        setModal({ open: true, type: 'alert', title: 'Microphone Blocked', message: 'Microphone permission is blocked. Please allow mic access in your browser settings and try again.', variant: 'danger' })
+        alert('Microphone permission is blocked. Please allow mic access in your browser settings and try again.')
         return
       }
       if (!stopRequestedRef.current) {
@@ -327,31 +339,28 @@ export default function ChatInterviewPage() {
     try {
       recognition.start()
     } catch (err) {
-      setModal({ open: true, type: 'alert', title: 'Voice Input Error', message: 'Unable to start voice input. Make sure no other app is using the mic and you are on a supported browser.', variant: 'warning' })
+      alert('Unable to start voice input. Make sure no other app is using the mic and you are on a supported browser.')
     }
   }
 
-  const doEnd = useCallback(async () => {
+  const handleEnd = async () => {
+    if (!isComplete) {
+      const confirmEnd = window.confirm("You are in an active interview session. Are you sure you want to end it? Your progress will be saved but you won't get a full evaluation.")
+      if (!confirmEnd) return
+    }
+
     interviewService.clearAISession(interviewId).catch(() => {})
     if (isComplete) await new Promise(r => setTimeout(r, 600))
     if (sessionId) await interviewService.endSession(sessionId).catch(() => {})
     navigate(isComplete ? `/interview/${interviewId}/report` : '/dashboard')
-  }, [interviewId, sessionId, isComplete, navigate])
-
-  const handleEnd = () => {
-    if (!isComplete) {
-      setModal({ open: true, type: 'endSession' })
-    } else {
-      doEnd()
-    }
   }
 
   const handleBack = () => {
     if (!isComplete) {
-      setModal({ open: true, type: 'leaveSession' })
-    } else {
-      navigate('/dashboard')
+      const confirmBack = window.confirm("You are in an active interview session. Leaving now will end the session. Continue?")
+      if (!confirmBack) return
     }
+    navigate('/dashboard')
   }
 
   // ── Derived display values ──────────────────────────────────────────────────
@@ -401,40 +410,6 @@ export default function ChatInterviewPage() {
 
   return (
     <div className="chat-page-wrapper">
-      {/* Confirm / Alert modals */}
-      <ConfirmModal
-        isOpen={modal.open && modal.type === 'endSession'}
-        title="End Interview Session?"
-        message="Your progress will be saved but you won't get a full evaluation. Are you sure you want to end it?"
-        confirmLabel="End Session"
-        cancelLabel="Keep Going"
-        variant="warning"
-        icon="⏹️"
-        onConfirm={() => { setModal({ open: false }); doEnd() }}
-        onCancel={() => setModal({ open: false })}
-      />
-      <ConfirmModal
-        isOpen={modal.open && modal.type === 'leaveSession'}
-        title="Leave Interview?"
-        message="You are in an active interview session. Leaving now will end the session."
-        confirmLabel="Leave"
-        cancelLabel="Stay"
-        variant="danger"
-        icon="🚪"
-        onConfirm={() => { setModal({ open: false }); navigate('/dashboard') }}
-        onCancel={() => setModal({ open: false })}
-      />
-      <ConfirmModal
-        isOpen={modal.open && modal.type === 'alert'}
-        title={modal.title || 'Notice'}
-        message={modal.message || ''}
-        confirmLabel="Got it"
-        variant={modal.variant || 'info'}
-        alertOnly
-        onConfirm={() => setModal({ open: false })}
-        onCancel={() => setModal({ open: false })}
-      />
-
       {/* Top bar */}
       <div className="chat-topbar">
         <button className="chat-back" onClick={handleBack}>
@@ -568,7 +543,9 @@ export default function ChatInterviewPage() {
                     ? '🎤 Listening… speak now'
                     : isComplete
                       ? 'Interview complete — click "End & View Report".'
-                      : 'Type your answer or click the mic…'
+                      : pendingComplete
+                        ? 'Final reply (optional) — or click "End & View Report".'
+                        : 'Type your answer or click the mic…'
                 }
                 value={input}
                 onChange={e => setInput(e.target.value)}
@@ -580,7 +557,7 @@ export default function ChatInterviewPage() {
                 className="chat-mic"
                 title={isListening ? 'Stop listening' : 'Voice input (click to speak)'}
                 onClick={toggleVoice}
-                disabled={isComplete}
+                disabled={isComplete || pendingComplete}
                 style={isListening
                   ? { background: 'rgba(0, 0, 0, 0.2)', color: 'var(--teal)', border: '1px solid var(--teal)' }
                   : {}}
@@ -590,7 +567,7 @@ export default function ChatInterviewPage() {
               <button
                 className="chat-send"
                 onClick={sendMessage}
-                disabled={sending || !input.trim() || isComplete}
+                disabled={sending || !input.trim() || isComplete || (pendingComplete && !input.trim())}
               >
                 ➤
               </button>

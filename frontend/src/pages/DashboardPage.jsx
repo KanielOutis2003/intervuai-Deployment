@@ -325,7 +325,7 @@ export default function DashboardPage() {
     <div className={`${preferences.highContrast ? 'high-contrast' : ''} ${preferences.largeFont ? 'large-font' : ''} ${preferences.reducedMotion ? 'reduced-motion' : ''}`}>
       {/* Nav */}
       <nav className="dash-nav">
-        <Link to="/" className="nav-logo">
+        <Link to="/dashboard" className="nav-logo">
           <LogoIcon />
           <span className="nav-logo-text">IntervuAI</span>
         </Link>
