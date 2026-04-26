@@ -112,19 +112,22 @@ const authService = {
     localStorage.setItem('access_token', session.access_token)
     localStorage.setItem('refresh_token', session.refresh_token)
 
-    // Ensure user_profiles row exists (backend may not have created one for OAuth users)
-    try {
-      await api.get('/users/me')
-    } catch (_) {
-      // Profile will be auto-created on first authenticated request if needed
-    }
+    // Extract name from OAuth provider metadata (Google/GitHub populate user_metadata)
+    const oauthName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      null
 
-    // Fetch profile from backend to get role
-    let profile = { id: user.id, email: user.email, full_name: null, role: 'user' }
+    // Fetch profile from backend (creates row if needed, returns role)
+    let profile = { id: user.id, email: user.email, full_name: oauthName, role: 'user' }
     try {
       const res = await api.get('/users/me')
       if (res.data?.data) {
-        profile = res.data.data
+        // Prefer backend profile but keep oauthName if backend has no name yet
+        profile = {
+          ...res.data.data,
+          full_name: res.data.data.full_name || oauthName,
+        }
       }
     } catch (_) {}
 

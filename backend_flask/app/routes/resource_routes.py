@@ -65,7 +65,12 @@ def create_resource():
 def update_resource(resource_id):
     """Update a resource (admin only)."""
     try:
-        body = request.get_json()
+        body = request.get_json() or {}
+        # Map camelCase frontend keys to snake_case DB keys
+        if 'resourceType' in body:
+            body['resource_type'] = body.pop('resourceType')
+        if 'isPublished' in body:
+            body['is_published'] = body.pop('isPublished')
         data = ResourceService.update_resource(resource_id, **body)
         return success_response(data)
     except APIError as e:

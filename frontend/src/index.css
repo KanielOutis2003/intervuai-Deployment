@@ -82,7 +82,7 @@ html{scroll-behavior:smooth;}
 body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden;}
 
 /* ============ SHARED COMPONENTS ============ */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border-radius:8px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s ease;text-decoration:none;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:8px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s ease;text-decoration:none;}
 .btn-coral{background:var(--coral);color:#fff;}
 .btn-coral:hover{background:var(--coral-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,86,106,0.35);}
 .btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border);}
@@ -209,8 +209,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-he
 .auth-social-btn:hover{border-color:var(--coral);color:var(--coral);}
 .auth-footer-link{text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);}
 .auth-footer-link a{color:var(--coral);text-decoration:none;font-weight:600;}
-.error-msg{background:#fde8eb;color:var(--coral-dark);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid var(--coral-light);animation:errorSlideIn .3s ease-out;}
-@keyframes errorSlideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.error-msg{background:#fde8eb;color:var(--coral-dark);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;border:1px solid var(--coral-light);}
 .success-msg{background:#e0f7f5;color:var(--teal-dark);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;}
 .input-error{border-color:var(--coral)!important;}
 .field-error{color:var(--coral-dark);font-size:12px;margin-top:4px;display:block;}
@@ -362,7 +361,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-he
 .cat-card p{font-size:12px;color:var(--text-muted);}
 
 /* ============ CHAT INTERVIEW PAGE ============ */
-.chat-page-wrapper{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg);}
+.chat-page-wrapper{display:flex;flex-direction:column;min-height:100vh;background:var(--bg);}
 .chat-topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
 .chat-back{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text);text-decoration:none;background:none;border:none;}
 .chat-back:hover{color:var(--coral);}
@@ -598,4 +597,19 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-he
   0%{transform:scale(0.5);opacity:0;}
   70%{transform:scale(1.15);}
   100%{transform:scale(1);opacity:1;}
+}
+
+
+/* ============ COLOR BLIND MODES ============ */
+/* Protanopia: red-blind — shift reds toward yellow-green */
+body.cb-protanopia {
+  filter: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><filter id='p'><feColorMatrix type='matrix' values='0.567 0.433 0 0 0  0.558 0.442 0 0 0  0 0.242 0.758 0 0  0 0 0 1 0'/></filter></svg>#p");
+}
+/* Deuteranopia: green-blind — shift greens toward red-blue */
+body.cb-deuteranopia {
+  filter: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><filter id='d'><feColorMatrix type='matrix' values='0.625 0.375 0 0 0  0.7 0.3 0 0 0  0 0.3 0.7 0 0  0 0 0 1 0'/></filter></svg>#d");
+}
+/* Tritanopia: blue-blind — shift blues toward red-green */
+body.cb-tritanopia {
+  filter: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><filter id='t'><feColorMatrix type='matrix' values='0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0'/></filter></svg>#t");
 }

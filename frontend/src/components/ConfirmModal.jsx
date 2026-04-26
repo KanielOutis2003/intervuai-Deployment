@@ -121,6 +121,7 @@ export default function ConfirmModal({
                 background: 'var(--bg, #f5f5f5)', border: '1.5px solid var(--border, #e5e7eb)',
                 fontWeight: 600, fontSize: 14, cursor: 'pointer',
                 color: 'var(--text, #374151)', transition: 'background 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
               onMouseEnter={e => e.currentTarget.style.background = '#e5e7eb'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--bg, #f5f5f5)'}
@@ -137,6 +138,7 @@ export default function ConfirmModal({
               fontWeight: 700, fontSize: 14, cursor: 'pointer',
               color: '#fff', boxShadow: `0 4px 14px ${v.btnShadow}`,
               transition: 'transform 0.1s, box-shadow 0.15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
             onMouseDown={e => e.currentTarget.style.transform = 'scale(0.97)'}
             onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}

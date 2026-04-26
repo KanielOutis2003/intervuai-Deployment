@@ -50,9 +50,14 @@ const POSTURE_NUDGE_THRESHOLD     = 55     // below 55 posture score = slouching
 const NUDGE_DURATION_MS           = 5_000  // must be low for 5 continuous seconds
 const NUDGE_COOLDOWN_MS           = 15_000 // don't re-nudge within 15s
 
+/* Smile detection thresholds */
+const SMILE_NUDGE_THRESHOLD = 0.25   // blendshape value < 0.25 = not smiling
+const SMILE_NUDGE_DURATION_MS = 20_000 // not smiling for 20s before nudge
+
 const NUDGE_MESSAGES = {
   eye:     'Maintain eye contact with the camera — look directly at the lens.',
   posture: 'Sit up straight — panelists notice confident posture.',
+  smile:   'Remember to smile! A warm expression builds rapport with interviewers.',
 }
 
 /* CDN for wasm/model bundles (avoids bundler issues with WASM) */
@@ -83,6 +88,7 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
   // Nudge tracking refs
   const eyeLowSinceRef      = useRef(null)   // timestamp when eye contact first dropped low
   const postureLowSinceRef  = useRef(null)   // timestamp when posture first dropped low
+  const smileLowSinceRef    = useRef(null)   // timestamp when smile first dropped low
   const lastNudgeTimeRef    = useRef(0)      // timestamp of last nudge fired (cooldown)
 
   /* ─── Initialise both landmarkers ──────────────────────────────────────── */
@@ -99,7 +105,7 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
             modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
             delegate: 'GPU',
           },
-          outputFaceBlendshapes: false,
+          outputFaceBlendshapes: true,
           runningMode: 'VIDEO',
           numFaces: 1,
           minFaceDetectionConfidence: 0.5,
@@ -260,6 +266,25 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
       } else {
         postureLowSinceRef.current = null
         setActiveNudge(prev => prev === NUDGE_MESSAGES.posture ? null : prev)
+      }
+
+      // Smile nudge: read mouthSmileLeft + mouthSmileRight blendshapes
+      const blendshapes = faceResult?.faceBlendshapes?.[0]?.categories
+      if (blendshapes && hasLandmarks) {
+        const smileL = blendshapes.find(b => b.categoryName === 'mouthSmileLeft')?.score ?? 0
+        const smileR = blendshapes.find(b => b.categoryName === 'mouthSmileRight')?.score ?? 0
+        const smileAvg = (smileL + smileR) / 2
+        if (smileAvg < SMILE_NUDGE_THRESHOLD) {
+          if (smileLowSinceRef.current === null) smileLowSinceRef.current = now
+          else if (cooldownOk && (now - smileLowSinceRef.current) >= SMILE_NUDGE_DURATION_MS) {
+            setActiveNudge(NUDGE_MESSAGES.smile)
+            lastNudgeTimeRef.current = now
+            smileLowSinceRef.current = null
+          }
+        } else {
+          smileLowSinceRef.current = null
+          setActiveNudge(prev => prev === NUDGE_MESSAGES.smile ? null : prev)
+        }
       }
     } catch {
       // Silently ignore individual frame errors

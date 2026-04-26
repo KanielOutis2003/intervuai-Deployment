@@ -375,7 +375,7 @@ export default function ResourceHubPage() {
     <div>
       {/* Nav */}
       <nav className="res-nav">
-        <Link to="/" className="nav-logo">
+        <Link to="/dashboard" className="nav-logo">
           <LogoIcon />
           <span className="nav-logo-text">IntervuAI</span>
         </Link>
