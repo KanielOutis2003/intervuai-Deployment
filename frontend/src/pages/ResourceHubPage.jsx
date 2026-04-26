@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import resourceService from '../services/resourceService'
 import subscriptionService from '../services/subscriptionService'
+import { useSubscription } from '../context/SubscriptionContext'
 
 const LogoIcon = () => (
   <div className="nav-logo-icon">
@@ -267,6 +268,7 @@ function SubscriptionModal({ plan, subscribing, onConfirm, onClose }) {
 
 export default function ResourceHubPage() {
   const navigate = useNavigate()
+  const { isPremium } = useSubscription()
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
   const [resources, setResources] = useState([])
@@ -522,7 +524,7 @@ export default function ResourceHubPage() {
         </div>
 
         {/* Subscription Plans */}
-        {plans.length > 0 && (
+        {plans.length > 0 && !isPremium && (
           <>
             <div className="res-section-title" style={{ marginTop: 40 }}>Subscription Plans</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 40 }}>
