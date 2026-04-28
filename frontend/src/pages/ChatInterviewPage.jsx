@@ -56,6 +56,7 @@ export default function ChatInterviewPage() {
   const [elapsed, setElapsed] = useState(0)
   const [interview, setInterview] = useState(null)
   const [isListening, setIsListening] = useState(false)
+  const [liveSpeech, setLiveSpeech] = useState('')
 
   // Live evaluation from AI (Groq)
   const [evaluation, setEvaluation] = useState(null)
@@ -278,6 +279,11 @@ export default function ChatInterviewPage() {
     }
     if (isListening) {
       stopRequestedRef.current = true
+      // Commit any interim speech to input before stopping
+      if (liveSpeech.trim()) {
+        setInput(prev => prev ? `${prev} ${liveSpeech.trim()}` : liveSpeech.trim())
+      }
+      setLiveSpeech('')
       try { recognitionRef.current?.stop?.() } catch {}
       setIsListening(false)
       return
@@ -290,33 +296,36 @@ export default function ChatInterviewPage() {
     recognition.interimResults = true
     recognition.continuous = true
     recognition.maxAlternatives = 1
-    let interim = ''
-    recognition.onstart = () => { speechBufferRef.current = ''; stopRequestedRef.current = false; interim = ''; setIsListening(true) }
+    recognition.onstart = () => { speechBufferRef.current = ''; stopRequestedRef.current = false; setLiveSpeech(''); setIsListening(true) }
     recognition.onend = () => {
-      const leftover = interim.trim()
-      if (leftover) {
-        setInput(prev => prev ? `${prev} ${leftover}` : leftover)
-        interim = ''
-      }
+      // Commit any remaining interim speech
+      setLiveSpeech(prev => {
+        if (prev.trim()) {
+          setInput(p => p ? `${p} ${prev.trim()}` : prev.trim())
+        }
+        return ''
+      })
       if (!stopRequestedRef.current) {
         setTimeout(() => { try { recognition.start() } catch {} }, 150)
       } else {
         setIsListening(false)
         speechBufferRef.current = ''
-        interim = ''
+        setLiveSpeech('')
       }
     }
     recognition.onerror = (e) => {
       const reason = e?.error || ''
       if (reason === 'not-allowed') {
         setIsListening(false)
-        alert('Microphone permission is blocked. Please allow mic access in your browser settings and try again.')
+        setLiveSpeech('')
+        setModal({ open: true, type: 'alert', title: 'Microphone Blocked', message: 'Microphone permission is blocked. Please allow mic access in your browser settings and try again.', variant: 'danger' })
         return
       }
       if (!stopRequestedRef.current) {
         setTimeout(() => { try { recognition.start() } catch {} }, 200)
       } else {
         setIsListening(false)
+        setLiveSpeech('')
       }
     }
     recognition.onresult = e => {
@@ -327,10 +336,10 @@ export default function ChatInterviewPage() {
           if (!txt) continue
           if (res.isFinal) {
             setInput(prev => prev ? `${prev} ${txt}` : txt)
-            interim = ''
+            setLiveSpeech('')
             inputRef.current?.focus()
           } else {
-            interim = interim ? `${interim} ${txt}` : txt
+            setLiveSpeech(txt)
           }
         }
       } catch {}
@@ -547,8 +556,8 @@ export default function ChatInterviewPage() {
                         ? 'Final reply (optional) — or click "End & View Report".'
                         : 'Type your answer or click the mic…'
                 }
-                value={input}
-                onChange={e => setInput(e.target.value)}
+                value={isListening && liveSpeech ? `${input}${input ? ' ' : ''}${liveSpeech}` : input}
+                onChange={e => { setInput(e.target.value); if (isListening) setLiveSpeech('') }}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                 disabled={isComplete}
                 style={isListening ? { borderColor: 'var(--teal)' } : {}}

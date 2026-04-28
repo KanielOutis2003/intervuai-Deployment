@@ -367,7 +367,16 @@ export default function VideoInterviewPage() {
   }
   const toggleCamera = () => {
     if (isCamOff) { setIsCamOff(false); startCamera() }
-    else { setIsCamOff(true); stopCamera() }
+    else {
+      // Only stop video tracks — keep audio alive for mic/volume analysis
+      if (streamRef.current) {
+        streamRef.current.getVideoTracks().forEach(t => t.stop())
+      }
+      if (videoRef.current) videoRef.current.srcObject = null
+      stopTracking()
+      if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
+      setIsCamOff(true)
+    }
   }
 
   // ── Non-verbal composite score ─────────────────────────────────────────────
@@ -418,7 +427,8 @@ export default function VideoInterviewPage() {
       if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
       if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
       if (audioContextRef.current) { try { audioContextRef.current.close() } catch {} }
-      recognitionRef.current?.stop()
+      try { recognitionRef.current?.stop?.() } catch {}
+      try { recognitionRef.current?.abort?.() } catch {}
     }
   }, [interviewId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -627,7 +637,7 @@ export default function VideoInterviewPage() {
         title="Leave Interview?"
         message="Leaving now will end the session."
         confirmLabel="Leave" cancelLabel="Stay" variant="danger" icon="🚪"
-        onConfirm={() => { setVModal({ open: false }); tts.stop(); stopCamera(); try { recognitionRef.current?.stop?.() } catch {}; navigate('/dashboard') }}
+        onConfirm={() => { setVModal({ open: false }); tts.stop(); stopCamera(); try { recognitionRef.current?.stop?.() } catch {}; try { recognitionRef.current?.abort?.() } catch {}; navigate('/dashboard') }}
         onCancel={() => setVModal({ open: false })}
       />
       <ConfirmModal

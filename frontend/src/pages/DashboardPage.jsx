@@ -299,8 +299,11 @@ export default function DashboardPage() {
         resumeUrl:       profileExt.resumeUrl       || null,
       })
       setProfileExtSaved(true)
+      setCfModal({ open: true, title: 'Profile Saved', message: 'Your career profile has been updated successfully.', variant: 'success', alertOnly: true })
       setTimeout(() => setProfileExtSaved(false), 2500)
-    } catch { /* ignore */ }
+    } catch {
+      setCfModal({ open: true, title: 'Save Failed', message: 'Failed to save profile. Please try again.', variant: 'danger', alertOnly: true })
+    }
     finally { setProfileExtSaving(false) }
   }
 
