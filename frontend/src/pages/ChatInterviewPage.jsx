@@ -445,8 +445,8 @@ export default function ChatInterviewPage() {
       {/* Layout */}
       <div className="chat-layout" style={{ flex: 1 }}>
         {/* Main chat area */}
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div className="chat-main" style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
+          <div className="chat-main" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {/* AI header */}
             <div className="chat-ai-header">
               <div className="ai-avatar">👤</div>
