@@ -342,15 +342,16 @@ export default function VideoInterviewPage() {
 
   // ── Voice input ────────────────────────────────────────────────────────────
   const toggleVoice = () => {
-    if (turnPhase !== 'USER_SPEAKING') return // state machine guard — never start recognition out of turn
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) { setVModal({ open: true, title: 'Browser Not Supported', message: 'Voice input is not supported in this browser. Please use Chrome or Edge.', variant: 'warning', alertOnly: true }); return }
+    // Always allow stopping, even if turn phase changed while listening
     if (isListening) {
       try { recognitionRef.current?.stop?.() } catch {}
       setIsListening(false)
       setLiveSpeech('')
       return
     }
+    if (turnPhase !== 'USER_SPEAKING') return // state machine guard — never start recognition out of turn
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) { setVModal({ open: true, title: 'Browser Not Supported', message: 'Voice input is not supported in this browser. Please use Chrome or Edge.', variant: 'warning', alertOnly: true }); return }
     try { recognitionRef.current?.abort?.() } catch {}
     const recognition = new SR()
     recognition.lang = 'en-US'
@@ -1122,11 +1123,6 @@ export default function VideoInterviewPage() {
           <div className="video-controls">
             <button className={`vid-ctrl-btn ${isMuted ? 'red' : 'gray'}`} onClick={toggleMute} title={isMuted ? 'Unmute mic' : 'Mute mic'}>{isMuted ? '🔇' : '🎤'}</button>
             <button className={`vid-ctrl-btn ${isCamOff ? 'red' : 'gray'}`} onClick={toggleCamera} title={isCamOff ? 'Turn camera on' : 'Turn camera off'}>{isCamOff ? '📷' : '🎥'}</button>
-            <button className={`vid-ctrl-btn ${isListening ? 'active' : 'gray'}`} onClick={toggleVoice} disabled={isComplete || turnPhase !== 'USER_SPEAKING'}
-              title={isListening ? 'Stop voice input' : 'Start voice input'}
-              style={isListening ? { background: 'rgba(0,200,140,0.25)', border: '2px solid var(--teal)', boxShadow: '0 0 12px rgba(0,200,140,0.3)' } : {}}>
-              {isListening ? '⏹' : '🎙️'}
-            </button>
             <button className="vid-ctrl-btn gray" onClick={() => { setTurnPhase('AI_THINKING'); tts.stop(); if (currentQuestion && !currentQuestion.startsWith('⚠')) speakQuestion(currentQuestion) }}
               title="Replay question" style={{ fontSize: 16 }}>🔊</button>
             <button className={`vid-ctrl-btn ${showAvatar ? 'active' : 'gray'}`}
@@ -1134,6 +1130,11 @@ export default function VideoInterviewPage() {
               title={showAvatar ? 'Hide AI Avatar' : 'Show AI Avatar'}
               style={{ fontSize: 14 }}>{showAvatar ? '🧑‍💼' : '👤'}</button>
             <div style={{ flex: 1 }} />
+            <button className={`vid-ctrl-btn ${isListening ? 'active' : 'gray'}`} onClick={toggleVoice} disabled={!isListening && (isComplete || turnPhase !== 'USER_SPEAKING')}
+              title={isListening ? 'Stop voice input' : 'Start voice input'}
+              style={isListening ? { background: 'rgba(0,200,140,0.25)', border: '2px solid var(--teal)', boxShadow: '0 0 12px rgba(0,200,140,0.3)' } : {}}>
+              {isListening ? '⏹' : '🎙️'}
+            </button>
             <button className="vid-end" onClick={handleEnd} title={isComplete ? 'View Report' : 'End interview'}
               style={isComplete ? { background: 'var(--teal)', color: '#fff' } : {}}>
               {isComplete ? '📊 View Report' : '✕ End'}
