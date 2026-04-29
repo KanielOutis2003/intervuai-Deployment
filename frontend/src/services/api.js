@@ -12,7 +12,8 @@ api.interceptors.request.use((config) => {
     localStorage.getItem('access_token') ||
     sessionStorage.getItem('access_token')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+    config.headers = config.headers ?? {}
+    config.headers['Authorization'] = `Bearer ${token}`
   }
   return config
 })

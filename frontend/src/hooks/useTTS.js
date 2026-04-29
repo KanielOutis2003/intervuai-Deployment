@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import api from '../services/api'
 
 /**
@@ -16,6 +16,11 @@ export default function useTTS() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const audioRef = useRef(null)
   const blobUrlRef = useRef(null)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => { isMountedRef.current = false }
+  }, [])
 
   const cleanup = useCallback(() => {
     if (audioRef.current) {
@@ -42,9 +47,9 @@ export default function useTTS() {
     utter.pitch = 1.0
     utter.volume = 1.0
     utter.lang = 'en-US'
-    utter.onstart = () => setIsSpeaking(true)
-    utter.onend = () => { setIsSpeaking(false); onEnd?.() }
-    utter.onerror = () => { setIsSpeaking(false); onEnd?.() }
+    utter.onstart = () => { if (isMountedRef.current) setIsSpeaking(true) }
+    utter.onend = () => { if (isMountedRef.current) setIsSpeaking(false); onEnd?.() }
+    utter.onerror = () => { if (isMountedRef.current) setIsSpeaking(false); onEnd?.() }
     const doSpeak = () => {
       const voices = window.speechSynthesis.getVoices()
       const voice = voices.find(v => v.lang === 'en-US' && !v.localService)
@@ -82,16 +87,15 @@ export default function useTTS() {
       const audio = new Audio(url)
       audioRef.current = audio
 
-      audio.onplay = () => setIsSpeaking(true)
+      audio.onplay = () => { if (isMountedRef.current) setIsSpeaking(true) }
       audio.onended = () => {
-        setIsSpeaking(false)
+        if (isMountedRef.current) setIsSpeaking(false)
         cleanup()
         onEnd?.()
       }
       audio.onerror = () => {
-        setIsSpeaking(false)
+        if (isMountedRef.current) setIsSpeaking(false)
         cleanup()
-        // Fallback to browser TTS on audio playback error
         speakFallback(text, onEnd)
       }
 
@@ -106,8 +110,7 @@ export default function useTTS() {
   /** Stop current playback */
   const stop = useCallback(() => {
     cleanup()
-    setIsSpeaking(false)
-    // Also cancel any browser fallback speech
+    if (isMountedRef.current) setIsSpeaking(false)
     try { window.speechSynthesis?.cancel() } catch {}
   }, [cleanup])
 

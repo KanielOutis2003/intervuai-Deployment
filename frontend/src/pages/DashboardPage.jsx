@@ -247,6 +247,7 @@ export default function DashboardPage() {
   const [profileExt, setProfileExt] = useState({ targetIndustry: '', experienceLevel: '', resumeUrl: '' })
   const [profileExtSaving, setProfileExtSaving] = useState(false)
   const [profileExtSaved, setProfileExtSaved] = useState(false)
+  const [profileExtError, setProfileExtError] = useState('')
   const [resumeUploading, setResumeUploading] = useState(false)
   const [resumeUploadProgress, setResumeUploadProgress] = useState(0)
   const [resumeUploadError, setResumeUploadError] = useState('')
@@ -292,6 +293,7 @@ export default function DashboardPage() {
   const saveProfileExt = async () => {
     setProfileExtSaving(true)
     setProfileExtSaved(false)
+    setProfileExtError('')
     try {
       await userService.updateProfile({
         targetIndustry:  profileExt.targetIndustry  || null,
@@ -301,10 +303,16 @@ export default function DashboardPage() {
       setProfileExtSaved(true)
       setCfModal({ open: true, title: 'Profile Saved', message: 'Your career profile has been updated successfully.', variant: 'success', alertOnly: true })
       setTimeout(() => setProfileExtSaved(false), 2500)
-    } catch {
-      setCfModal({ open: true, title: 'Save Failed', message: 'Failed to save profile. Please try again.', variant: 'danger', alertOnly: true })
+    } catch (err) {
+      const status = err?.response?.status
+      if (status === 401) {
+        setProfileExtError('Session expired. Please refresh the page and sign in again.')
+      } else {
+        setProfileExtError(err?.response?.data?.error || 'Failed to save profile. Please try again.')
+      }
+    } finally {
+      setProfileExtSaving(false)
     }
-    finally { setProfileExtSaving(false) }
   }
 
   const handleResumeFileUpload = async (e) => {
@@ -909,6 +917,9 @@ export default function DashboardPage() {
                     >
                       {profileExtSaving ? 'Saving…' : profileExtSaved ? '✓ Saved' : 'Save Profile'}
                     </button>
+                    {profileExtError && (
+                      <p style={{fontSize:12,color:'var(--error,#e53e3e)',margin:'4px 0 0'}}>{profileExtError}</p>
+                    )}
                   </div>
                 </div>
               )}

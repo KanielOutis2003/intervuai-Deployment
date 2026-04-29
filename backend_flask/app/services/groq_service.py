@@ -83,9 +83,10 @@ EVALUATION CRITERIA:
 - structure_score: How well-organized the answer is — did they use a clear framework (STAR for behavioral, problem-solution-result for technical)? Logical flow? Clear beginning, middle, end?
 - engagement_score: Did the candidate show enthusiasm, provide thoughtful responses, ask clarifying questions? Does the answer feel genuine and engaged vs. generic and rehearsed?
 
-When you have asked 8-10 questions total and received all answers, set is_complete to true:
+When you have asked 8-10 questions total and received all answers, set is_complete to true.
+CRITICAL CLOSING RULE: When is_complete is true, "next_question" MUST be a warm closing STATEMENT — NOT a question. The input field is locked immediately after this message; the candidate cannot reply. Do NOT end with a question mark. Do NOT ask anything. Deliver a genuine, professional closing remark (thank them warmly, share a brief positive impression, mention next steps like "we'll be in touch").
 {
-  "next_question": "Thank the candidate naturally and professionally — as a real interviewer would wrap up",
+  "next_question": "A warm closing STATEMENT — no question, no question mark",
   "evaluation": { ... },
   "interview_phase": "closing",
   "is_complete": true,

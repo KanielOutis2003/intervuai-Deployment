@@ -1,11 +1,27 @@
 """User profile and preferences service."""
 import logging
 
+import httpx
 from typing import Dict, Any, Optional
 from app.config.supabase_client import supabase_admin
 from app.utils.responses import APIError
 
 logger = logging.getLogger(__name__)
+
+
+def _execute(query_fn):
+    """
+    Execute a supabase query lambda, retrying once on HTTP/2 stream drops.
+
+    httpx.RemoteProtocolError (ConnectionTerminated) can occur when the server
+    closes an HTTP/2 stream, typically during concurrent requests on cold-start
+    infrastructure. A single retry is enough to recover from transient drops.
+    """
+    try:
+        return query_fn()
+    except httpx.RemoteProtocolError as exc:
+        logger.warning('HTTP/2 stream dropped — retrying query once: %s', exc)
+        return query_fn()
 
 
 class UserService:
@@ -196,19 +212,27 @@ class UserService:
         """
         try:
             # Get total interviews count
-            interviews_response = supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).execute()
+            interviews_response = _execute(
+                lambda: supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).execute()
+            )
             total_interviews = interviews_response.count or 0
 
             # Get completed interviews
-            completed_response = supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).eq('status', 'completed').execute()
+            completed_response = _execute(
+                lambda: supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).eq('status', 'completed').execute()
+            )
             completed_interviews = completed_response.count or 0
 
             # Get in-progress interviews
-            in_progress_response = supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).eq('status', 'in_progress').execute()
+            in_progress_response = _execute(
+                lambda: supabase_admin.table('interviews').select('id', count='exact').eq('user_id', user_id).eq('status', 'in_progress').execute()
+            )
             in_progress_interviews = in_progress_response.count or 0
 
             # Get recent interviews (last 5)
-            recent_response = supabase_admin.table('interviews').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
+            recent_response = _execute(
+                lambda: supabase_admin.table('interviews').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(5).execute()
+            )
             recent_interviews = []
             for interview in recent_response.data:
                 recent_interviews.append({
@@ -220,7 +244,9 @@ class UserService:
                 })
 
             # Get average scores from completed interviews
-            avg_scores_response = supabase_admin.table('interviews').select('overall_score, verbal_score, non_verbal_score').eq('user_id', user_id).eq('status', 'completed').execute()
+            avg_scores_response = _execute(
+                lambda: supabase_admin.table('interviews').select('overall_score, verbal_score, non_verbal_score').eq('user_id', user_id).eq('status', 'completed').execute()
+            )
 
             avg_overall = 0
             avg_verbal = 0

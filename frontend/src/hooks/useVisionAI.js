@@ -197,6 +197,10 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
 
   /* ─── Per-frame analysis ─────────────────────────────────────────────────── */
   const analyzeFrame = useCallback((timestampMs) => {
+    // Belt-and-suspenders guard: the RAF loop already checks isRunningRef, but a
+    // frame can be in-flight when stopTracking() is called (e.g. on unmount).
+    // This prevents setVisionMetrics / setActiveNudge from firing after cleanup.
+    if (!isRunningRef.current) return
     const video = videoRef?.current
     if (!video || video.readyState < 2) return
 
