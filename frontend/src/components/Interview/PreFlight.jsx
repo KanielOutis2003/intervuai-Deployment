@@ -65,7 +65,11 @@ export default function PreFlight({ isVisionReady, visionError, onStart, onClose
     requestPermission()
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      if (audioCtxRef.current) { try { audioCtxRef.current.close() } catch {} }
+      // Guard against double-close: AudioContext.close() returns a Promise that
+      // rejects with InvalidStateError if the context is already closed.
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {})
+      }
       // Do NOT stop tracks here — the interview page will reuse the same stream
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -74,7 +78,10 @@ export default function PreFlight({ isVisionReady, visionError, onStart, onClose
   const handleStart = () => {
     // Stop the RAF meter — interview page will set up its own analyser
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    if (audioCtxRef.current) { try { audioCtxRef.current.close() } catch {} }
+    if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+      audioCtxRef.current.close().catch(() => {})
+      audioCtxRef.current = null // null the ref so the unmount cleanup skips it
+    }
     // Pass the already-acquired stream so the page doesn't need a second prompt
     onStart(streamRef.current)
   }

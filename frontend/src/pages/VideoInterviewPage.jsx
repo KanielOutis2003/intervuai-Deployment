@@ -62,6 +62,10 @@ export default function VideoInterviewPage() {
   const [answer, setAnswer] = useState('')
   const [aiLoading, setAiLoading] = useState(true)
   const [questionCount, setQuestionCount] = useState(0)
+  const [isInterviewStarted, setIsInterviewStarted] = useState(false)
+  // Strict turn-taking state machine — single source of truth for mic hardware
+  // IDLE → AI_THINKING → AI_SPEAKING → USER_SPEAKING ↔ AI_THINKING … → COMPLETED
+  const [turnPhase, setTurnPhase] = useState('IDLE')
 
   // Modal state
   const [vModal, setVModal] = useState({ open: false })
@@ -112,6 +116,11 @@ export default function VideoInterviewPage() {
   const volumeSamplesRef = useRef([])
   const wordTimestampsRef = useRef([])
   const fillerWordsRef = useRef(0)
+  const isInterviewStartedRef = useRef(false)  // synced with isInterviewStarted state
+  const userMutedRef = useRef(false)           // tracks whether the user manually muted
+  const isListeningRef = useRef(false)         // lets effects read isListening without stale closure
+  const isMountedRef = useRef(true)            // prevents async state updates after unmount
+  const turnPhaseRef = useRef('IDLE')          // mirror of turnPhase for stale-closure-safe reads
 
   // Filler words to detect
   const FILLER_WORDS = ['um', 'uh', 'uhm', 'like', 'you know', 'basically', 'actually', 'literally', 'so yeah', 'i mean']
@@ -119,6 +128,12 @@ export default function VideoInterviewPage() {
   useEffect(() => {
     return () => { try { recognitionRef.current?.abort?.() } catch {} }
   }, [])
+
+  // Keep isListeningRef in sync so isSpeaking effect can read it without stale closure
+  useEffect(() => { isListeningRef.current = isListening }, [isListening])
+
+  // Keep turnPhaseRef in sync so recognition.onend/onerror closures always read current phase
+  useEffect(() => { turnPhaseRef.current = turnPhase }, [turnPhase])
 
   // ── MediaPipe Vision AI — edge-side non-verbal tracking ───────────────────
   // Must come AFTER videoRef is declared above
@@ -135,16 +150,24 @@ export default function VideoInterviewPage() {
   // ── Text-to-Speech (OpenAI TTS with browser fallback) ─────────────────────
   const speakQuestion = useCallback((text) => {
     if (!text || text.startsWith('⚠')) {
+      // No audio — go straight to USER_SPEAKING (unless session is already done)
+      setTurnPhase(p => p === 'COMPLETED' ? 'COMPLETED' : 'USER_SPEAKING')
       setTimerActive(true)
       return
     }
     tts.stop()
-    tts.speak(text, { onEnd: () => setTimerActive(true) })
+    tts.speak(text, {
+      onEnd: () => {
+        // TTS finished — hand the turn back to the user (unless session ended mid-speech)
+        setTurnPhase(p => p === 'COMPLETED' ? 'COMPLETED' : 'USER_SPEAKING')
+        setTimerActive(true)
+      },
+    })
   }, [tts])
 
   // ── Typewriter effect ─────────────────────────────────────────────────────
   useEffect(() => {
-    if (!currentQuestion) return
+    if (!isInterviewStartedRef.current || !currentQuestion) return
     if (typewriterRef.current) clearInterval(typewriterRef.current)
     setDisplayedQuestion('')
     setIsTyping(true)
@@ -178,6 +201,41 @@ export default function VideoInterviewPage() {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
   }, [timerActive, isComplete])
 
+  // ── State machine: turnPhase is the ONLY thing that enables/disables mic hardware ──
+  // Mic is ONLY on during USER_SPEAKING (and only if user hasn't manually muted).
+  // Every other phase — AI_THINKING, AI_SPEAKING, IDLE, COMPLETED — mic is physically off.
+  useEffect(() => {
+    if (!streamRef.current) return
+    const micActive = turnPhase === 'USER_SPEAKING' && !userMutedRef.current
+    streamRef.current.getAudioTracks().forEach(t => { t.enabled = micActive })
+    if (turnPhase !== 'USER_SPEAKING') {
+      // abort() stops recognition without triggering the auto-restart onend path
+      try { recognitionRef.current?.abort?.() } catch {}
+      setIsListening(false)
+      setLiveSpeech('')
+    }
+  }, [turnPhase]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Advance AI_THINKING → AI_SPEAKING once the audio element actually starts playing
+  useEffect(() => {
+    if (isSpeaking && turnPhase === 'AI_THINKING') setTurnPhase('AI_SPEAKING')
+  }, [isSpeaking, turnPhase])
+
+  // COMPLETED: atomic hardware killswitch — fires immediately when session ends
+  // Note: does NOT stop TTS — the closing remark should still play to completion
+  useEffect(() => {
+    if (turnPhase !== 'COMPLETED') return
+    try { recognitionRef.current?.abort?.() } catch {} // abort() not stop() — stop triggers onend auto-restart
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
+    if (videoRef.current) videoRef.current.srcObject = null
+    if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
+    if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') { audioContextRef.current.close().catch(() => {}) }
+    audioContextRef.current = null
+    analyserRef.current = null
+    stopTracking()
+  }, [turnPhase, stopTracking]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Camera + Audio Analysis ────────────────────────────────────────────────
   const startCamera = useCallback(async (existingStream = null) => {
     try {
@@ -185,6 +243,9 @@ export default function VideoInterviewPage() {
       // Reuse the stream acquired during PreFlight to avoid a second permission prompt
       const stream = existingStream || await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       streamRef.current = stream
+      // Enforce mic state immediately — the turnPhase effect fires on next render (too late)
+      const micActive = turnPhaseRef.current === 'USER_SPEAKING' && !userMutedRef.current
+      stream.getAudioTracks().forEach(t => { t.enabled = micActive })
       if (videoRef.current) videoRef.current.srcObject = stream
 
       // Set up audio analysis for tone/volume
@@ -274,12 +335,14 @@ export default function VideoInterviewPage() {
     if (videoRef.current) videoRef.current.srcObject = null
     if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
     if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
-    if (audioContextRef.current) { try { audioContextRef.current.close() } catch {} audioContextRef.current = null }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') { audioContextRef.current.close().catch(() => {}) }
+    audioContextRef.current = null
     analyserRef.current = null
   }, [stopTracking])
 
   // ── Voice input ────────────────────────────────────────────────────────────
   const toggleVoice = () => {
+    if (turnPhase !== 'USER_SPEAKING') return // state machine guard — never start recognition out of turn
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) { setVModal({ open: true, title: 'Browser Not Supported', message: 'Voice input is not supported in this browser. Please use Chrome or Edge.', variant: 'warning', alertOnly: true }); return }
     if (isListening) {
@@ -305,7 +368,8 @@ export default function VideoInterviewPage() {
         const leftover = (liveSpeech || '').trim()
         if (leftover) { setLiveSpeech(''); setAnswer(prev => prev ? `${prev} ${leftover}` : leftover) }
       } catch {}
-      if (!isComplete) {
+      // Use turnPhaseRef (not isComplete) — isComplete is a stale closure captured at toggleVoice call time
+      if (turnPhaseRef.current === 'USER_SPEAKING') {
         setTimeout(() => { try { recognition.start() } catch {} }, 150)
       } else { setIsListening(false); setLiveSpeech('') }
     }
@@ -316,7 +380,7 @@ export default function VideoInterviewPage() {
         setVModal({ open: true, title: 'Microphone Blocked', message: 'Microphone permission is blocked. Please allow mic access in your browser settings.', variant: 'danger', alertOnly: true })
         return
       }
-      if (!isComplete) setTimeout(() => { try { recognition.start() } catch {} }, 200)
+      if (turnPhaseRef.current === 'USER_SPEAKING') setTimeout(() => { try { recognition.start() } catch {} }, 200)
       else { setIsListening(false); setLiveSpeech('') }
     }
     recognition.onresult = e => {
@@ -362,8 +426,14 @@ export default function VideoInterviewPage() {
 
   // ── Toggle mute / camera ───────────────────────────────────────────────────
   const toggleMute = () => {
-    if (streamRef.current) streamRef.current.getAudioTracks().forEach(t => { t.enabled = isMuted })
-    setIsMuted(m => !m)
+    const newMuted = !isMuted
+    userMutedRef.current = newMuted
+    if (streamRef.current) {
+      // Only allow enabling the mic if the state machine says we're in the user's turn
+      const canBeOn = turnPhase === 'USER_SPEAKING'
+      streamRef.current.getAudioTracks().forEach(t => { t.enabled = canBeOn && !newMuted })
+    }
+    setIsMuted(newMuted)
   }
   const toggleCamera = () => {
     if (isCamOff) { setIsCamOff(false); startCamera() }
@@ -385,10 +455,29 @@ export default function VideoInterviewPage() {
     )))
   }, [audioMetrics.avgVolume, audioMetrics.pace])
 
-  // ── Init: camera + interview ───────────────────────────────────────────────
+  // ── Fix #1: Elapsed timer + full hardware cleanup on unmount ─────────────────
+  // Camera and AI init are NOT called here — they run after the user clicks "Start"
   useEffect(() => {
-    startCamera()
-    if (!interviewId) return
+    const timer = setInterval(() => setElapsed(p => p + 1), 1000)
+    return () => {
+      clearInterval(timer)
+      tts.stop()
+      if (typewriterRef.current) clearInterval(typewriterRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
+      isMountedRef.current = false  // stop all post-unmount async state updates
+      if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
+      if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
+      if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {})
+      }
+      try { recognitionRef.current?.abort?.() } catch {}
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Fix #1: AI interview init — fires ONLY after user clicks "Start" in PreFlight ──
+  useEffect(() => {
+    if (!isInterviewStarted || !interviewId) return
     interviewService.getInterview(interviewId)
       .then(data => {
         setInterview(data)
@@ -398,29 +487,19 @@ export default function VideoInterviewPage() {
         })
       })
       .then(data => {
+        if (!isMountedRef.current) return
         setCurrentQuestion(data.next_question || 'Good morning! Please introduce yourself and tell me a bit about your background.')
         setInterviewPhase(data.interview_phase || 'opening')
         setAiLoading(false)
         setQuestionCount(1)
       })
       .catch(err => {
+        if (!isMountedRef.current) return
         console.error('[AI] startInterview error:', err)
         setCurrentQuestion(`⚠ Could not connect to AI: ${err.message}. Make sure the Flask backend is running and GROQ_API_KEY is set.`)
         setAiLoading(false)
       })
-    const timer = setInterval(() => setElapsed(p => p + 1), 1000)
-    return () => {
-      clearInterval(timer)
-      tts.stop()
-      if (typewriterRef.current) clearInterval(typewriterRef.current)
-      if (countdownRef.current) clearInterval(countdownRef.current)
-      if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
-      if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
-      if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
-      if (audioContextRef.current) { try { audioContextRef.current.close() } catch {} }
-      recognitionRef.current?.stop()
-    }
-  }, [interviewId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isInterviewStarted, interviewId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isCamOff && videoRef.current && streamRef.current) videoRef.current.srcObject = streamRef.current
@@ -432,14 +511,12 @@ export default function VideoInterviewPage() {
   // ── Submit answer ──────────────────────────────────────────────────────────
   const submitAnswer = async () => {
     if (!answer.trim() || aiLoading || isComplete) return
+    // Step 1: kill the mic immediately — before any async work. The turnPhase effect
+    // disables audio tracks and stops recognition synchronously on this render cycle.
+    setTurnPhase('AI_THINKING')
     tts.stop()
     setTimerActive(false)
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null }
-    if (isListening) {
-      try { recognitionRef.current?.stop?.() } catch {}
-      setIsListening(false)
-      setLiveSpeech('')
-    }
     const userAnswer = answer.trim()
     setAnswer('')
     setLiveSpeech('')
@@ -472,6 +549,7 @@ export default function VideoInterviewPage() {
       if (data.difficulty_level) setDifficultyLevel(data.difficulty_level)
       if (data.is_complete) {
         setIsComplete(true)
+        setTurnPhase('COMPLETED') // triggers atomic hardware killswitch (cam/mic stop, recognition stops)
         setFinalSummary(data.final_summary || null)
         const nvScore = calcNonVerbalScore()
         setNonVerbalScore(nvScore)
@@ -526,9 +604,11 @@ export default function VideoInterviewPage() {
         final_summary: data.final_summary || null,
       }).catch(() => {})
     } catch (err) {
+      if (!isMountedRef.current) return
       console.error('[AI] submitAnswer error:', err)
       setCurrentQuestion(`⚠ AI error: ${err.message}. Check that the Flask backend is running and GROQ_API_KEY is configured.`)
     } finally {
+      if (!isMountedRef.current) return
       setAiLoading(false)
       answerRef.current?.focus()
     }
@@ -539,7 +619,7 @@ export default function VideoInterviewPage() {
     tts.stop()
     if (typewriterRef.current) clearInterval(typewriterRef.current)
     if (countdownRef.current) clearInterval(countdownRef.current)
-    stopCamera()
+    stopCamera() // synchronous hardware kill before navigation
     try { recognitionRef.current?.stop?.() } catch {}
     interviewService.clearAISession(interviewId).catch(() => {})
     if (isComplete) await new Promise(r => setTimeout(r, 600))
@@ -580,7 +660,7 @@ export default function VideoInterviewPage() {
 
   const phaseLabel = { opening: 'Opening', technical: 'Technical', behavioral: 'Behavioral', closing: 'Closing', unknown: '—' }[interviewPhase] || interviewPhase
   const phaseIcon = { opening: '👋', technical: '💻', behavioral: '🧠', closing: '🤝' }[interviewPhase] || '📋'
-  const canSubmit = answer.trim().length > 0 && !aiLoading && !isComplete
+  const canSubmit = answer.trim().length > 0 && !aiLoading && !isComplete && turnPhase === 'USER_SPEAKING'
 
   const difficultyLabel = { easy: 'Easy', moderate: 'Moderate', challenging: 'Challenging' }[difficultyLevel] || difficultyLevel
   const difficultyColor = { easy: '#16a34a', moderate: '#d97706', challenging: '#e53e3e' }[difficultyLevel] || 'rgba(255,255,255,.4)'
@@ -606,7 +686,10 @@ export default function VideoInterviewPage() {
   const handlePreFlightStart = useCallback((preFlyStream) => {
     preFlyStreamRef.current = preFlyStream
     setShowPreFlight(false)
-    // Start camera using the already-acquired stream (no second permission prompt)
+    isInterviewStartedRef.current = true
+    setIsInterviewStarted(true)
+    turnPhaseRef.current = 'AI_THINKING' // set ref BEFORE startCamera so mic enforcement is immediate
+    setTurnPhase('AI_THINKING')           // queues React state update (fires on next render)
     startCamera(preFlyStream)
   }, [startCamera])
 
@@ -943,7 +1026,7 @@ export default function VideoInterviewPage() {
                   value={isListening && liveSpeech ? `${answer}${answer ? ' ' : ''}${liveSpeech}` : answer}
                   onChange={e => { setAnswer(e.target.value); if (isListening) setLiveSpeech('') }}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && canSubmit) { e.preventDefault(); submitAnswer() } }}
-                  disabled={aiLoading || isSpeaking}
+                  disabled={turnPhase !== 'USER_SPEAKING' || aiLoading}
                   rows={3}
                   style={{
                     flex: 1, resize: 'vertical', minHeight: 72,
@@ -1022,12 +1105,12 @@ export default function VideoInterviewPage() {
           <div className="video-controls">
             <button className={`vid-ctrl-btn ${isMuted ? 'red' : 'gray'}`} onClick={toggleMute} title={isMuted ? 'Unmute mic' : 'Mute mic'}>{isMuted ? '🔇' : '🎤'}</button>
             <button className={`vid-ctrl-btn ${isCamOff ? 'red' : 'gray'}`} onClick={toggleCamera} title={isCamOff ? 'Turn camera on' : 'Turn camera off'}>{isCamOff ? '📷' : '🎥'}</button>
-            <button className={`vid-ctrl-btn ${isListening ? 'active' : 'gray'}`} onClick={toggleVoice} disabled={aiLoading || isComplete}
+            <button className={`vid-ctrl-btn ${isListening ? 'active' : 'gray'}`} onClick={toggleVoice} disabled={isComplete || turnPhase !== 'USER_SPEAKING'}
               title={isListening ? 'Stop voice input' : 'Start voice input'}
               style={isListening ? { background: 'rgba(0,200,140,0.25)', border: '2px solid var(--teal)', boxShadow: '0 0 12px rgba(0,200,140,0.3)' } : {}}>
               {isListening ? '⏹' : '🎙️'}
             </button>
-            <button className="vid-ctrl-btn gray" onClick={() => { tts.stop(); if (currentQuestion && !currentQuestion.startsWith('⚠')) speakQuestion(currentQuestion) }}
+            <button className="vid-ctrl-btn gray" onClick={() => { setTurnPhase('AI_THINKING'); tts.stop(); if (currentQuestion && !currentQuestion.startsWith('⚠')) speakQuestion(currentQuestion) }}
               title="Replay question" style={{ fontSize: 16 }}>🔊</button>
             <button className={`vid-ctrl-btn ${showAvatar ? 'active' : 'gray'}`}
               onClick={() => { setShowAvatar(v => { const next = !v; localStorage.setItem('intervuai_show_avatar', String(next)); return next }) }}

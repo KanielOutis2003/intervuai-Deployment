@@ -61,7 +61,6 @@ export default function ChatInterviewPage() {
   const [evaluation, setEvaluation] = useState(null)
   const [interviewPhase, setInterviewPhase] = useState('opening')
   const [isComplete, setIsComplete] = useState(false)
-  const [pendingComplete, setPendingComplete] = useState(false) // complete flagged but user hasn't sent final reply yet
   const [difficultyLevel, setDifficultyLevel] = useState('easy')
 
   // Score history for trend tracking
@@ -84,6 +83,14 @@ export default function ChatInterviewPage() {
       } catch {}
     }
   }, [])
+
+  // Fix #3: Stop voice recognition the moment session completes
+  useEffect(() => {
+    if (!isComplete) return
+    stopRequestedRef.current = true
+    try { recognitionRef.current?.stop?.() } catch {}
+    setIsListening(false)
+  }, [isComplete])
 
   useEffect(() => {
     if (!interviewId) return
@@ -163,7 +170,12 @@ export default function ChatInterviewPage() {
 
   const sendMessage = async () => {
     if (!input.trim() || sending || isComplete) return
-    const isFinalReply = pendingComplete
+    // Fix #2: Stop voice recognition immediately before sending
+    if (isListening) {
+      stopRequestedRef.current = true
+      try { recognitionRef.current?.stop?.() } catch {}
+      setIsListening(false)
+    }
     const content = input.trim()
     setInput('')
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -206,14 +218,7 @@ export default function ChatInterviewPage() {
         if (data.interview_phase) setInterviewPhase(data.interview_phase)
         if (data.difficulty_level) setDifficultyLevel(data.difficulty_level)
         if (data.is_complete) {
-          if (pendingComplete) {
-            // Second complete signal — fully lock now
-            setIsComplete(true)
-            setPendingComplete(false)
-          } else {
-            // First complete signal — keep input open for one final reply
-            setPendingComplete(true)
-          }
+          setIsComplete(true)
         }
 
         const aiContent = data.is_complete
@@ -242,11 +247,6 @@ export default function ChatInterviewPage() {
         }).catch(() => {})
 
         if (data.is_complete) _saveScores(data)
-        // If this was the user's final reply after wrap-up, lock now regardless
-        if (isFinalReply) {
-          setIsComplete(true)
-          setPendingComplete(false)
-        }
         setSending(false)
       },
 
@@ -543,9 +543,7 @@ export default function ChatInterviewPage() {
                     ? '🎤 Listening… speak now'
                     : isComplete
                       ? 'Interview complete — click "End & View Report".'
-                      : pendingComplete
-                        ? 'Final reply (optional) — or click "End & View Report".'
-                        : 'Type your answer or click the mic…'
+                      : 'Type your answer or click the mic…'
                 }
                 value={input}
                 onChange={e => setInput(e.target.value)}
@@ -557,7 +555,7 @@ export default function ChatInterviewPage() {
                 className="chat-mic"
                 title={isListening ? 'Stop listening' : 'Voice input (click to speak)'}
                 onClick={toggleVoice}
-                disabled={isComplete || pendingComplete}
+                disabled={isComplete}
                 style={isListening
                   ? { background: 'rgba(0, 0, 0, 0.2)', color: 'var(--teal)', border: '1px solid var(--teal)' }
                   : {}}
@@ -567,7 +565,7 @@ export default function ChatInterviewPage() {
               <button
                 className="chat-send"
                 onClick={sendMessage}
-                disabled={sending || !input.trim() || isComplete || (pendingComplete && !input.trim())}
+                disabled={sending || !input.trim() || isComplete}
               >
                 ➤
               </button>
