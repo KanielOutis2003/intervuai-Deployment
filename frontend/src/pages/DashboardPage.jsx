@@ -273,8 +273,10 @@ export default function DashboardPage() {
       await userService.updateProfile({ fullName: trimmed })
       updateUser({ full_name: trimmed })
       setIsEditingName(false)
+      setCfModal({ open: true, title: 'Name Updated', message: 'Your display name has been saved.', variant: 'success', alertOnly: true })
     } catch (err) {
       setNameError(err.response?.data?.error || 'Failed to update name.')
+      setCfModal({ open: true, title: 'Save Failed', message: err.response?.data?.error || 'Failed to update name. Please try again.', variant: 'danger', alertOnly: true })
     } finally {
       setNameSaving(false)
     }

@@ -474,12 +474,20 @@ export default function VideoInterviewPage() {
       if (typewriterRef.current) clearInterval(typewriterRef.current)
       if (countdownRef.current) clearInterval(countdownRef.current)
       isMountedRef.current = false  // stop all post-unmount async state updates
-      if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null }
+      // Kill ALL media tracks aggressively — prevents camera LED staying on
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => { t.stop(); t.enabled = false })
+        streamRef.current = null
+      }
+      if (videoRef.current) { videoRef.current.srcObject = null; videoRef.current.pause() }
       if (behaviorIntervalRef.current) { clearInterval(behaviorIntervalRef.current); behaviorIntervalRef.current = null }
       if (audioIntervalRef.current) { clearInterval(audioIntervalRef.current); audioIntervalRef.current = null }
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close().catch(() => {})
       }
+      audioContextRef.current = null
+      analyserRef.current = null
+      try { recognitionRef.current?.stop?.() } catch {}
       try { recognitionRef.current?.abort?.() } catch {}
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps

@@ -61,7 +61,7 @@ const NUDGE_MESSAGES = {
 }
 
 /* CDN for wasm/model bundles (avoids bundler issues with WASM) */
-const MEDIAPIPE_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+const MEDIAPIPE_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/wasm'
 
 export default function useVisionAI(videoRef, isSpeaking = false) {
   const [isInitialized, setIsInitialized]   = useState(false)
