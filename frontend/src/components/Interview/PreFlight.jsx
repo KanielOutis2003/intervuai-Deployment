@@ -17,7 +17,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-export default function PreFlight({ isVisionReady, visionError, onStart, onClose }) {
+export default function PreFlight({ isVisionReady, visionError, onStart, onClose, onRetryVision }) {
   const [permissionStatus, setPermissionStatus] = useState('pending')  // pending | granted | denied
   const [volume, setVolume]                     = useState(0)           // 0-100
   const [stream, setStream]                     = useState(null)
@@ -120,16 +120,45 @@ export default function PreFlight({ isVisionReady, visionError, onStart, onClose
               Verify your setup before starting
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 10, padding: '6px 12px', color: 'rgba(255,255,255,0.5)',
-              cursor: 'pointer', fontSize: 13,
-            }}
-          >
-            Back
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => {
+                // Cleanup current stream and audio context
+                if (rafRef.current) cancelAnimationFrame(rafRef.current)
+                if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+                  audioCtxRef.current.close().catch(() => {})
+                  audioCtxRef.current = null
+                }
+                if (streamRef.current) {
+                  streamRef.current.getTracks().forEach(t => t.stop())
+                  streamRef.current = null
+                }
+                setStream(null)
+                setVolume(0)
+                // Re-run all checks
+                requestPermission()
+                if (onRetryVision) onRetryVision()
+              }}
+              style={{
+                background: 'rgba(0,200,140,0.1)', border: '1px solid rgba(0,200,140,0.25)',
+                borderRadius: 10, padding: '6px 12px', color: '#00c88c',
+                cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4,
+              }}
+              title="Retry all checks"
+            >
+              ↻ Retry
+            </button>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none', border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 10, padding: '6px 12px', color: 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              ← Dashboard
+            </button>
+          </div>
         </div>
 
         {/* Check rows */}

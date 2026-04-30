@@ -145,6 +145,7 @@ export default function VideoInterviewPage() {
     startTracking,
     stopTracking,
     getSessionAverages,
+    retryInit: retryVision,
   } = useVisionAI(videoRef, isSpeaking)
 
   // ── Text-to-Speech (OpenAI TTS with browser fallback) ─────────────────────
@@ -746,6 +747,7 @@ export default function VideoInterviewPage() {
           visionError={visionError}
           onStart={handlePreFlightStart}
           onClose={() => navigate('/dashboard')}
+          onRetryVision={retryVision}
         />
       )}
 

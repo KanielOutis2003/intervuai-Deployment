@@ -375,6 +375,12 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
     }
   }, [])
 
+  const retryInit = useCallback(() => {
+    setIsInitialized(false)
+    setInitError(null)
+    initialize()
+  }, [initialize])
+
   return {
     visionMetrics,
     activeNudge,
@@ -383,5 +389,6 @@ export default function useVisionAI(videoRef, isSpeaking = false) {
     startTracking,
     stopTracking,
     getSessionAverages,
+    retryInit,
   }
 }
