@@ -110,55 +110,53 @@ export default function PreFlight({ isVisionReady, visionError, onStart, onClose
         width: 480, maxWidth: '95vw', boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         border: '1px solid rgba(255,255,255,0.07)',
       }}>
+        {/* Top action row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', padding: 0,
+              color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 13,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+          <button
+            onClick={() => {
+              if (rafRef.current) cancelAnimationFrame(rafRef.current)
+              if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+                audioCtxRef.current.close().catch(() => {})
+                audioCtxRef.current = null
+              }
+              if (streamRef.current) {
+                streamRef.current.getTracks().forEach(t => t.stop())
+                streamRef.current = null
+              }
+              setStream(null)
+              setVolume(0)
+              requestPermission()
+              if (onRetryVision) onRetryVision()
+            }}
+            style={{
+              background: 'rgba(0,200,140,0.1)', border: '1px solid rgba(0,200,140,0.25)',
+              borderRadius: 8, padding: '5px 12px', color: '#00c88c',
+              cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4,
+            }}
+            title="Retry all checks"
+          >
+            ↻ Retry
+          </button>
+        </div>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <div>
-            <h2 style={{ fontWeight: 700, fontSize: 22, margin: 0, color: 'var(--text, #fff)' }}>
-              Pre-Interview Check
-            </h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
-              Verify your setup before starting
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => {
-                // Cleanup current stream and audio context
-                if (rafRef.current) cancelAnimationFrame(rafRef.current)
-                if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-                  audioCtxRef.current.close().catch(() => {})
-                  audioCtxRef.current = null
-                }
-                if (streamRef.current) {
-                  streamRef.current.getTracks().forEach(t => t.stop())
-                  streamRef.current = null
-                }
-                setStream(null)
-                setVolume(0)
-                // Re-run all checks
-                requestPermission()
-                if (onRetryVision) onRetryVision()
-              }}
-              style={{
-                background: 'rgba(0,200,140,0.1)', border: '1px solid rgba(0,200,140,0.25)',
-                borderRadius: 10, padding: '6px 12px', color: '#00c88c',
-                cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4,
-              }}
-              title="Retry all checks"
-            >
-              ↻ Retry
-            </button>
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 10, padding: '6px 12px', color: 'rgba(255,255,255,0.5)',
-                cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4,
-              }}
-            >
-              ← Dashboard
-            </button>
-          </div>
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ fontWeight: 700, fontSize: 22, margin: 0, color: 'var(--text, #fff)' }}>
+            Pre-Interview Check
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>
+            Verify your setup before starting
+          </p>
         </div>
 
         {/* Check rows */}
