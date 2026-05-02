@@ -66,6 +66,13 @@ const interviewService = {
     } catch (err) { wrap(err) }
   },
 
+  async getNonVerbalMetrics(interviewId) {
+    try {
+      const res = await api.get(`/feedback/non-verbal/interview/${interviewId}`)
+      return res.data.data
+    } catch (err) { return { metrics: [] } }
+  },
+
   async endSession(sessionId) {
     try {
       const res = await api.post(`/sessions/${sessionId}/end`, { sessionId })

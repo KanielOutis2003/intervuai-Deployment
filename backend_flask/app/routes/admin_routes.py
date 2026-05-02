@@ -75,6 +75,19 @@ def get_platform_timeseries():
     except Exception as e:
         return error_response(f"Failed to get time-series: {str(e)}", 500)
 
+
+@admin_bp.route('/sales-report', methods=['GET'])
+@require_admin
+def get_sales_report():
+    """Get subscription-derived sales, revenue, and conversion metrics."""
+    try:
+        data = AdminService.get_sales_report(request.args.get('range', '30d'))
+        return success_response(data)
+    except APIError as e:
+        return error_response(e.message, e.status_code)
+    except Exception as e:
+        return error_response(f"Failed to get sales report: {str(e)}", 500)
+
 # ── User Management ───────────────────────────────────────────────────────────
 
 @admin_bp.route('/users', methods=['GET'])

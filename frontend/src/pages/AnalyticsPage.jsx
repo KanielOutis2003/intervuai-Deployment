@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useTheme } from '../context/ThemeContext'
 import { useSubscription } from '../context/SubscriptionContext'
 import analyticsService from '../services/analyticsService'
@@ -10,6 +11,20 @@ const LogoIcon = () => (
     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>
   </div>
 )
+
+const SkChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="sales-chart-tooltip">
+      <div className="sales-chart-tooltip-title">{label}</div>
+      {payload.map(item => (
+        <div key={item.dataKey} style={{ color: item.color, fontWeight: 700 }}>
+          {item.name || item.dataKey}: {Math.round(item.value || 0)}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function AnalyticsPage() {
   const navigate = useNavigate()
@@ -134,7 +149,9 @@ export default function AnalyticsPage() {
         </div>
 
         {loading ? (
-          <div style={{textAlign:'center',padding:60,color:'var(--text-muted)'}}>Loading analytics...</div>
+          <div className="sk-analytics-loading">
+            {[0, 1, 2, 3].map(i => <div className="sk-loader-panel" key={i} />)}
+          </div>
         ) : (
           <>
             {/* ── OVERVIEW TAB ─────────────────────────────────────────── */}
@@ -151,38 +168,17 @@ export default function AnalyticsPage() {
                   </div>
                   {scores.length > 0 ? (
                     <div className="line-chart">
-                      <svg className="chart-svg" viewBox={`0 0 ${Math.max(scores.length * 80, 400)} 220`} preserveAspectRatio="none">
-                        {[0,25,50,75,100].map(y => (
-                          <g key={y}>
-                            <line x1="32" y1={200 - (y/100)*180} x2="100%" y2={200 - (y/100)*180} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,4"/>
-                            <text x="0" y={204 - (y/100)*180} fontSize="9" fill="var(--text-muted)">{y}</text>
-                          </g>
-                        ))}
-                        {scores.length > 1 && (
-                          <polyline points={scores.map((s, i) => `${i * 80 + 40},${200 - ((s.overallScore||0)/maxScore)*180}`).join(' ')} fill="none" stroke="var(--coral)" strokeWidth="2.5" strokeLinejoin="round"/>
-                        )}
-                        {scores.some(s => s.verbalScore) && scores.length > 1 && (
-                          <polyline points={scores.map((s, i) => `${i * 80 + 40},${200 - ((s.verbalScore||0)/maxScore)*180}`).join(' ')} fill="none" stroke="var(--teal)" strokeWidth="2" strokeLinejoin="round" strokeDasharray="5,3"/>
-                        )}
-                        {scores.some(s => s.nonVerbalScore) && scores.length > 1 && (
-                          <polyline points={scores.map((s, i) => `${i * 80 + 40},${200 - ((s.nonVerbalScore||0)/maxScore)*180}`).join(' ')} fill="none" stroke="var(--purple)" strokeWidth="2" strokeLinejoin="round" strokeDasharray="3,3"/>
-                        )}
-                        {scores.map((s, i) => (
-                          <g key={i}>
-                            <circle cx={i * 80 + 40} cy={200 - ((s.overallScore||0)/maxScore)*180} r="4" fill="var(--coral)" stroke="var(--card)" strokeWidth="2">
-                              <title>{s.jobRole || 'Interview'}: Overall {Math.round(s.overallScore||0)}</title>
-                            </circle>
-                            {s.verbalScore > 0 && (
-                              <circle cx={i * 80 + 40} cy={200 - ((s.verbalScore||0)/maxScore)*180} r="3" fill="var(--teal)" stroke="var(--card)" strokeWidth="1.5">
-                                <title>Verbal: {Math.round(s.verbalScore)}</title>
-                              </circle>
-                            )}
-                            <text x={i * 80 + 40} y="215" textAnchor="middle" fontSize="9" fill="var(--text-muted)">
-                              {s.jobRole ? s.jobRole.split(' ')[0] : `#${i+1}`}
-                            </text>
-                          </g>
-                        ))}
-                      </svg>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={scores} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
+                          <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
+                          <XAxis dataKey="jobRole" tickFormatter={(v, i) => v ? String(v).split(' ')[0] : `#${i + 1}`} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                          <YAxis domain={[0, maxScore]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
+                          <Tooltip content={<SkChartTooltip />} />
+                          <Line type="monotone" name="Overall" dataKey="overallScore" stroke="var(--coral)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1200} animationEasing="ease-out" />
+                          <Line type="monotone" name="Verbal" dataKey="verbalScore" stroke="var(--teal)" strokeWidth={2.5} strokeDasharray="6 4" dot={false} animationDuration={1250} animationEasing="ease-out" />
+                          <Line type="monotone" name="Non-Verbal" dataKey="nonVerbalScore" stroke="var(--purple)" strokeWidth={2.5} strokeDasharray="3 4" dot={false} animationDuration={1300} animationEasing="ease-out" />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   ) : (
                     <div style={{height:220,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--text-muted)',gap:8}}>
@@ -298,12 +294,15 @@ export default function AnalyticsPage() {
                     <h3>Score Distribution</h3>
                   </div>
                   <div className="bar-chart">
-                    {Object.entries(distData).map(([range, count]) => (
-                      <div className="bar-group" key={range}>
-                        <div className="bar" style={{height:`${Math.max((count/distMax)*160,4)}px`}}></div>
-                        <div className="bar-label">{range}</div>
-                      </div>
-                    ))}
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={Object.entries(distData).map(([range, count]) => ({ range, count }))} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
+                        <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
+                        <XAxis dataKey="range" tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                        <YAxis domain={[0, distMax]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} allowDecimals={false} />
+                        <Tooltip content={<SkChartTooltip />} />
+                        <Bar name="Sessions" dataKey="count" fill="var(--teal)" radius={[10, 10, 4, 4]} maxBarSize={54} animationDuration={1050} animationEasing="ease-out" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 

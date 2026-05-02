@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CSVLink } from 'react-csv'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import adminService from '../services/adminService'
 import resourceService from '../services/resourceService'
 import userService from '../services/userService'
 import authService from '../services/authService'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { formatCurrency } from '../utils/formatters'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const ROLES        = ['user', 'premium', 'admin']
@@ -67,7 +69,7 @@ const inputStyle = {
 function Modal({ title, onClose, children, maxWidth = 520 }) {
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 16, backdropFilter: 'blur(4px)' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.58)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{ background: 'var(--card)', borderRadius: 14, padding: 28, width: '100%', maxWidth, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', border: '1px solid var(--border)' }}>
@@ -149,15 +151,8 @@ function EmptyState({ icon, message }) {
 function Loading({ message = 'Loading...', size = 32 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-      <div className="spinner" style={{ 
-        width: size, height: size, border: '3px solid var(--border)', borderTopColor: 'var(--coral)', 
-        borderRadius: '50%', marginBottom: 16 
-      }} />
+      <div className="sk-loader-panel" style={{ width: Math.max(size * 4, 128), height: size, marginBottom: 16 }} />
       <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: '0.02em' }}>{message}</div>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { animation: spin 0.8s linear infinite; }
-      `}</style>
     </div>
   )
 }
@@ -493,6 +488,197 @@ function SystemAnalyticsTab({ analytics, timeseries }) {
   )
 }
 // ── Users Tab ─────────────────────────────────────────────────────────────────
+function SalesReportSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <SectionCard title="Sales Report">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '20px 22px' }}>
+              <Skeleton height={24} width={36} borderRadius={8} marginBottom={14} />
+              <Skeleton height={28} width="70%" borderRadius={8} marginBottom={10} />
+              <Skeleton height={12} width="55%" borderRadius={8} marginBottom={8} />
+              <Skeleton height={10} width="80%" borderRadius={8} />
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+        {[0, 1].map(i => (
+          <SectionCard key={i} title={i === 0 ? 'Revenue Trend' : 'Revenue by Plan'}>
+            <Skeleton height={240} borderRadius={12} />
+          </SectionCard>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SalesChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  const row = payload[0].payload || {}
+  return (
+    <div className="sales-chart-tooltip">
+      <div className="sales-chart-tooltip-title">{row.dateLabel || row.plan || label}</div>
+      <div>{formatCurrency(payload[0].value, { convertFromUSD: true })}</div>
+      {row.subscriptions != null && (
+        <div className="sales-chart-tooltip-sub">{row.subscriptions} upgrade{row.subscriptions === 1 ? '' : 's'}</div>
+      )}
+    </div>
+  )
+}
+
+function SalesReportTab() {
+  const [range, setRange] = useState('30d')
+  const [report, setReport] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    setLoading(true)
+    setError('')
+    adminService.getSalesReport(range)
+      .then(setReport)
+      .catch(err => setError(err?.response?.data?.error || 'Failed to load sales report.'))
+      .finally(() => setLoading(false))
+  }, [range])
+
+  const money = (value, options = {}) => formatCurrency(value, { convertFromUSD: true, ...options })
+  const isPremiumPlan = (name = '') => name.toLowerCase().includes('premium')
+  const trend = (report?.revenueTrend || []).map(d => ({
+    ...d,
+    dateLabel: d.date ? new Date(d.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
+  }))
+  const plans = report?.revenueByPlan || []
+  const premiumSummary = plans
+    .filter(plan => isPremiumPlan(plan.plan))
+    .reduce((acc, plan) => ({
+      plan: 'Premium',
+      revenue: acc.revenue + Number(plan.revenue || 0),
+      subscriptions: acc.subscriptions + Number(plan.subscriptions || 0),
+    }), { plan: 'Premium', revenue: 0, subscriptions: 0 })
+  const premiumChartData = premiumSummary.revenue > 0 || premiumSummary.subscriptions > 0
+    ? [premiumSummary]
+    : []
+  const transactions = (report?.recentTransactions || []).filter(tx => isPremiumPlan(tx.planName))
+  const newUpgrades = report?.newPremiumSubscriptions ?? premiumSummary.subscriptions ?? 0
+  const activePremiumUsers = report?.activePremiumUsers ?? report?.activePaidSubscriptions ?? 0
+
+  if (loading) return <SalesReportSkeleton />
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <SectionCard
+        title="Sales Report"
+        action={
+          <select className="chart-select" value={range} onChange={e => setRange(e.target.value)}>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+            <option value="all">All Time</option>
+          </select>
+        }
+      >
+        {error ? (
+          <div className="error-msg">{error}</div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12 }}>
+              <KpiCard icon="PHP" color="coral" val={money(report?.totalRevenue)} label="Total Revenue" sub="Earned in selected timeframe" />
+              <KpiCard icon="Premium" color="teal" val={`${activePremiumUsers} Users`} label="Active Premium Users" sub="Currently subscribed to Premium" />
+              <KpiCard icon="%" color="purple" val={`${report?.conversionRate ?? 0}%`} label="Conversion Rate" sub="% of Free users who upgraded to Premium" />
+              <KpiCard icon="+" color="yellow" val={newUpgrades} label="New Upgrades" sub="Premium purchases in this timeframe" />
+            </div>
+            <p style={{ margin: '14px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+              Financial values are displayed in Philippine Peso using a 56 PHP/USD conversion for stored plan prices.
+            </p>
+          </>
+        )}
+      </SectionCard>
+
+      {!error && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 16 }}>
+          <SectionCard title="Revenue Trend">
+            {trend.length > 0 ? (
+              <div className="sk-led-panel" style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer>
+                  <AreaChart data={trend} margin={{ top: 10, right: 18, left: 8, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="salesRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--coral)" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="var(--coral)" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="dateLabel" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={18} />
+                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
+                    <Tooltip content={<SalesChartTooltip />} cursor={{ stroke: 'var(--coral)', strokeDasharray: '4 4' }} />
+                    <Area type="monotone" dataKey="revenue" stroke="var(--coral)" strokeWidth={3} fill="url(#salesRevenueGradient)" activeDot={{ r: 6 }} animationDuration={900} animationEasing="ease-out" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon="PHP" message="No Premium revenue in this range." />
+            )}
+          </SectionCard>
+
+          <SectionCard title="Revenue by Plan">
+            {premiumChartData.length > 0 ? (
+              <div className="sk-led-panel" style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer>
+                  <BarChart data={premiumChartData} margin={{ top: 16, right: 18, left: 8, bottom: 8 }}>
+                    <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="plan" tick={{ fill: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }} tickLine={false} axisLine={false} />
+                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
+                    <Tooltip content={<SalesChartTooltip />} cursor={{ fill: 'rgba(62,207,191,0.08)' }} />
+                    <Bar dataKey="revenue" fill="var(--teal)" radius={[10, 10, 4, 4]} maxBarSize={88} animationDuration={800} animationEasing="ease-out" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState icon="PHP" message="No Premium upgrades in this range." />
+            )}
+          </SectionCard>
+        </div>
+      )}
+
+      {!error && (
+        <SectionCard title="Recent Transactions">
+          {transactions.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-transactions-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
+                    {['Customer', 'Plan', 'Amount', 'Status', 'Started'].map(h => (
+                      <th key={h} style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map(tx => (
+                    <tr key={tx.id} className="admin-table-row" style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ fontWeight: 700 }}>{tx.email || 'Unknown customer'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tx.userId?.slice(0, 8)}...</div>
+                      </td>
+                      <td style={{ padding: '12px' }}>{tx.planName || 'Premium'}</td>
+                      <td style={{ padding: '12px', fontWeight: 800, color: 'var(--coral)' }}>{money(tx.amount)}</td>
+                      <td style={{ padding: '12px' }}><StatusBadge status={tx.status} /></td>
+                      <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{fmt(tx.startedAt, true)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState icon="PHP" message="No recent Premium upgrade activity." />
+          )}
+        </SectionCard>
+      )}
+    </div>
+  )
+}
+
 function UsersTab({ setGlobalLoading }) {
   const [users, setUsers]       = useState([])
   const [loading, setLoading]   = useState(true)
@@ -1782,7 +1968,7 @@ function PlansTab() {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-head)' }}>{p.name}</div>
                       <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--coral)', marginTop: 2 }}>
-                        ${p.price}<span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-muted)' }}>/mo</span>
+                        {formatCurrency(p.price, { convertFromUSD: true })}<span style={{ fontSize: 13, fontWeight: 400, color: 'var(--text-muted)' }}>/mo</span>
                       </div>
                     </div>
                     <button className="btn btn-ghost btn-sm" style={{ color: 'var(--coral)', fontSize: 12 }} onClick={() => handleDelete(p.id, p.name)}>Delete</button>
@@ -1808,7 +1994,7 @@ function PlansTab() {
               <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Pro" />
             </div>
             <div className="form-group">
-              <div className="form-label">Price ($/mo) *</div>
+              <div className="form-label">Price (shown as PHP / mo) *</div>
               <input className="form-input" type="number" min="0" step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="9.99" />
             </div>
           </div>
@@ -2099,6 +2285,7 @@ function SettingsTab({ config }) {
 
 // ── Main Admin Dashboard ──────────────────────────────────────────────────────
 const TABS = [
+  { id: 'sales',      label: 'Sales Report' },
   { id: 'overview',   label: '📊 Overview' },
   { id: 'sysanalytics', label: '📈 System Analytics' },
   { id: 'users',      label: '👥 Users' },
@@ -2309,7 +2496,7 @@ export default function AdminDashboardPage() {
                 fontSize: 13, fontWeight: activeTab === t.id ? 700 : 500,
                 background: activeTab === t.id ? 'var(--coral)' : 'transparent',
                 color: activeTab === t.id ? '#fff' : 'var(--text-muted)',
-                transition: 'all 0.15s', whiteSpace: 'nowrap',
+                transition: 'transform 0.15s ease-out, color 0.15s ease-out, opacity 0.15s ease-out', whiteSpace: 'nowrap',
               }}
             >
               {t.label}
@@ -2321,6 +2508,7 @@ export default function AdminDashboardPage() {
         <div className="tab-content animate-fade-in">
           {activeTab === 'overview'   && <OverviewTab metrics={metrics} config={config} analytics={analytics} />}
           {activeTab === 'sysanalytics' && <SystemAnalyticsTab analytics={analytics} timeseries={timeseries} />}
+          {activeTab === 'sales'      && <SalesReportTab />}
           {activeTab === 'users'      && <UsersTab setGlobalLoading={setGlobalLoading} />}
           {activeTab === 'interviews' && <InterviewsTab setGlobalLoading={setGlobalLoading} />}
           {activeTab === 'questions'  && <QuestionsTab />}

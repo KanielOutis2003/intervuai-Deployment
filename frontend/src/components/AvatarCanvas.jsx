@@ -139,26 +139,26 @@ export default function AvatarCanvas({ audioRef, isSpeaking, style }) {
         background: 'linear-gradient(135deg, #1a2332 0%, #0f1923 40%, #162130 100%)',
         zIndex: 0,
       }}>
-        {/* Subtle office bokeh lights */}
+        {/* Subtle static console lights */}
         <div style={{
           position: 'absolute', top: '15%', left: '10%', width: 60, height: 60,
-          borderRadius: '50%', background: 'rgba(255,200,100,0.06)', filter: 'blur(20px)',
+          borderRadius: '50%', background: 'rgba(255,200,100,0.035)',
         }} />
         <div style={{
           position: 'absolute', top: '8%', right: '15%', width: 80, height: 80,
-          borderRadius: '50%', background: 'rgba(100,180,255,0.05)', filter: 'blur(25px)',
+          borderRadius: '50%', background: 'rgba(100,180,255,0.03)',
         }} />
         <div style={{
           position: 'absolute', bottom: '20%', left: '20%', width: 100, height: 100,
-          borderRadius: '50%', background: 'rgba(0,200,140,0.04)', filter: 'blur(30px)',
+          borderRadius: '50%', background: 'rgba(0,200,140,0.03)',
         }} />
       </div>
 
       {/* Green accent glow when speaking */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
-        boxShadow: isSpeaking ? `inset 0 0 60px rgba(0,200,140,${glowIntensity})` : 'none',
-        transition: 'box-shadow 0.3s ease',
+        boxShadow: isSpeaking ? `inset 0 0 5px rgba(0,200,140,${glowIntensity})` : 'none',
+        transition: 'opacity 0.3s ease-out',
         borderRadius: 'inherit',
       }} />
 
@@ -177,9 +177,9 @@ export default function AvatarCanvas({ audioRef, isSpeaking, style }) {
             width: 140, height: 140, borderRadius: '50%', overflow: 'hidden',
             border: `3px solid ${isSpeaking ? 'rgba(0,200,140,0.6)' : 'rgba(255,255,255,0.12)'}`,
             boxShadow: isSpeaking
-              ? `0 0 30px rgba(0,200,140,${0.15 + amplitude * 0.25}), 0 4px 20px rgba(0,0,0,0.5)`
-              : '0 4px 20px rgba(0,0,0,0.5)',
-            transition: 'border-color 0.4s, box-shadow 0.3s',
+              ? `0 0 5px rgba(0,200,140,${0.15 + amplitude * 0.25}), 0 4px 5px rgba(0,0,0,0.5)`
+              : '0 4px 5px rgba(0,0,0,0.5)',
+            transition: 'border-color 0.4s, opacity 0.3s ease-out',
             position: 'relative',
           }}>
             {!imageLoaded && (
@@ -197,8 +197,8 @@ export default function AvatarCanvas({ audioRef, isSpeaking, style }) {
               style={{
                 width: '100%', height: '100%', objectFit: 'cover',
                 display: imageLoaded ? 'block' : 'none',
-                filter: isSpeaking ? 'brightness(1.05)' : 'brightness(0.95)',
-                transition: 'filter 0.5s',
+                opacity: isSpeaking ? 1 : 0.96,
+                transition: 'opacity 0.5s ease-out',
               }}
             />
 
@@ -223,12 +223,11 @@ export default function AvatarCanvas({ audioRef, isSpeaking, style }) {
           <div style={{
             position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
             background: isSpeaking ? 'rgba(0,200,140,0.9)' : 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(8px)',
             borderRadius: 12, padding: '3px 10px',
             fontSize: 9, fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase',
             color: isSpeaking ? '#fff' : 'rgba(255,255,255,0.5)',
             border: `1px solid ${isSpeaking ? 'rgba(0,200,140,0.5)' : 'rgba(255,255,255,0.08)'}`,
-            transition: 'all 0.4s ease', whiteSpace: 'nowrap',
+            transition: 'opacity 0.4s ease-out, border-color 0.4s ease-out', whiteSpace: 'nowrap',
             display: 'flex', alignItems: 'center', gap: 4,
           }}>
             <div style={{

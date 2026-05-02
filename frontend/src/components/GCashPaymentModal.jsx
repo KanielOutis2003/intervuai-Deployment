@@ -12,11 +12,9 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import { formatCurrency, toPHP } from '../utils/formatters'
 
 /* ─── Constants ────────────────────────────────────────────────────────── */
-const USD_TO_PHP   = 56
-const toPHP        = (usd) => Math.round((usd || 0) * USD_TO_PHP)
-
 const EWALLET_COUNTDOWN = 20  // seconds
 
 /* ─── Card helpers ─────────────────────────────────────────────────────── */
@@ -103,7 +101,7 @@ function Steps({ step }) {
                 background: isComplete || isActive ? '#5046e5' : 'var(--border)',
                 color: isComplete || isActive ? '#fff' : '#9ca3af',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, transition: 'all 0.3s',
+                fontSize: 11, fontWeight: 700, transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
               }}>
                 {isComplete ? '✓' : idx}
               </div>
@@ -137,7 +135,7 @@ function MethodSelector({ selected, onSelect }) {
               border: `2px solid ${isActive ? '#5046e5' : 'var(--border)'}`,
               background: isActive ? '#f0f0ff' : 'var(--bg)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'all 0.18s', fontWeight: isActive ? 700 : 500,
+              transition: 'transform 0.18s ease-out, border-color 0.18s ease-out, opacity 0.18s ease-out', fontWeight: isActive ? 700 : 500,
               fontSize: 13, color: isActive ? '#5046e5' : 'var(--text)',
             }}
           >
@@ -432,7 +430,7 @@ function CardForm({ onPay, amount }) {
           boxShadow: '0 4px 14px rgba(80,70,229,0.35)',
         }}
       >
-        🔒 Pay ₱{toPHP(amount).toLocaleString()} securely
+        🔒 Pay {formatCurrency(amount, { convertFromUSD: true })} securely
       </button>
     </div>
   )
@@ -445,7 +443,7 @@ function EWalletForm({ method, plan, onPay, onCountdownDone }) {
   const timerRef       = useRef(null)
   const expiredRef     = useRef(false)
 
-  const qrValue = `https://pay.${method}.ph/intervuai/${plan?.id}?amount=${toPHP(plan?.price)}&ref=${Math.random().toString(36).slice(2,10)}`
+  const qrValue = `https://pay.${method}.ph/intervuai/${plan?.id}?amount=${Math.round(toPHP(plan?.price, { convertFromUSD: true }))}&ref=${Math.random().toString(36).slice(2,10)}`
 
   // Trigger onCountdownDone outside of the setCountdown updater to avoid
   // the "setState during render" React warning
@@ -500,7 +498,7 @@ function EWalletForm({ method, plan, onPay, onCountdownDone }) {
         fontSize: 13, color: meta.color, fontWeight: 600,
       }}>
         Amount: <span style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 900 }}>
-          ₱{toPHP(plan?.price).toLocaleString()}
+          {formatCurrency(plan?.price, { convertFromUSD: true })}
         </span> / month
       </div>
 
@@ -575,7 +573,7 @@ function Success({ plan, method, onClose }) {
   const refNo = `IV-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`
   const rows = [
     ['Plan',    plan?.name || 'Premium'],
-    ['Amount',  `₱${toPHP(plan?.price).toLocaleString()}/month`],
+    ['Amount',  `${formatCurrency(plan?.price, { convertFromUSD: true })}/month`],
     ['Method',  method === 'card' ? 'Credit / Debit Card' : EWALLET_META[method]?.name || method],
     ['Status',  '✅  Paid'],
     ['Ref No',  refNo],
@@ -693,7 +691,7 @@ export default function GCashPaymentModal({ isOpen, onClose, plan, onSuccess }) 
             <div>
               <div style={{ fontWeight: 700, fontSize: 14 }}>IntervuAI Checkout</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {plan?.name} — ₱{toPHP(plan?.price).toLocaleString()}/mo
+                {plan?.name} — {formatCurrency(plan?.price, { convertFromUSD: true })}/mo
               </div>
             </div>
           </div>

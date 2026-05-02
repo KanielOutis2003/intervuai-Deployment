@@ -2,13 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { usePDF } from 'react-to-pdf'
 import interviewService from '../services/interviewService'
+import { useSubscription } from '../context/SubscriptionContext'
+import UpgradeModal from '../components/UpgradeModal'
 
 const ScoreRing = ({ value, color, label }) => {
   // Treat 0 same as null — 0 means the score was never set (DB default, not a real score)
   const pct = (value != null && value > 0) ? Math.round(value) : null
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{
+    <div className="sk-score-ring" style={{ textAlign: 'center' }}>
+      <div className="sk-score-ring-dial" style={{
         width: 72, height: 72, borderRadius: '50%',
         border: `5px solid ${pct != null ? color : 'var(--border)'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -31,8 +33,11 @@ export default function InterviewReportPage() {
   const navigate = useNavigate()
   const [interview, setInterview] = useState(null)
   const [messages, setMessages] = useState([])
+  const [nonVerbalMetrics, setNonVerbalMetrics] = useState([])
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { isPremium } = useSubscription()
   const { toPDF, targetRef } = usePDF({ filename: 'IntervuAI_Report.pdf' })
 
   useEffect(() => {
@@ -41,10 +46,12 @@ export default function InterviewReportPage() {
     Promise.all([
       interviewService.getInterview(interviewId),
       interviewService.getMessages(interviewId),
+      interviewService.getNonVerbalMetrics(interviewId),
     ])
-      .then(([iv, msgData]) => {
+      .then(([iv, msgData, nvData]) => {
         setInterview(iv)
         setMessages(msgData?.messages || [])
+        setNonVerbalMetrics(nvData?.metrics || [])
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
@@ -86,6 +93,7 @@ export default function InterviewReportPage() {
         question: questionMsg?.content || '',
         answer: messages[i].content,
         evaluation: evalMsg?.metadata?.evaluation || null,
+        suggestedAnswer: evalMsg?.metadata?.evaluation?.suggested_answer || evalMsg?.metadata?.suggested_answer || '',
         timestamp: messages[i].timestamp,
       })
     }
@@ -101,6 +109,58 @@ export default function InterviewReportPage() {
     if (val >= 60) return 'var(--teal)'
     if (val >= 40) return '#d97706'
     return 'var(--coral)'
+  }
+
+  const latestNonVerbal = nonVerbalMetrics[0] || {}
+  const eyeContactScore = latestNonVerbal.eye_contact_avg
+    ?? (interview?.eye_contact_score != null ? interview.eye_contact_score : null)
+  const postureScore = latestNonVerbal.posture_score
+    ?? (interview?.posture_score != null ? interview.posture_score : null)
+  const nonVerbalTips = []
+  if (eyeContactScore != null && eyeContactScore < 55) {
+    nonVerbalTips.push('Your eye contact looked inconsistent. Practice answering while looking at the camera lens, then glance back at notes only between thoughts.')
+  } else if (eyeContactScore != null) {
+    nonVerbalTips.push('Your eye contact was steady. Keep using the camera lens as your anchor during key points.')
+  }
+  if (postureScore != null && postureScore < 60) {
+    nonVerbalTips.push('Your posture suggested tension or slouching. Relax your shoulders, sit tall, and keep your head centered before each answer.')
+  } else if (postureScore != null) {
+    nonVerbalTips.push('Your posture supported a confident presence. Keep your shoulders level and avoid leaning away during longer answers.')
+  }
+  if (interview?.non_verbal_score != null && interview.non_verbal_score < 60 && nonVerbalTips.length === 0) {
+    nonVerbalTips.push('Your non-verbal presence needs a little polish. Focus on calm breathing, a steady expression, and a camera-height posture.')
+  }
+
+  const requirePremiumExport = (action) => {
+    if (!isPremium) {
+      setShowUpgradeModal(true)
+      return
+    }
+    action()
+  }
+
+  const downloadCSV = () => {
+    const esc = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`
+    const rows = [
+      ['Question', 'User Answer', 'AI Coach Suggested Answer', 'Overall Score', 'Feedback'],
+      ...qaRounds.map(r => [
+        r.question,
+        r.answer,
+        r.suggestedAnswer,
+        r.evaluation?.overall_quality ?? '',
+        r.evaluation?.feedback ?? '',
+      ]),
+    ]
+    const csv = rows.map(row => row.map(esc).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `IntervuAI_Report_${interviewId}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -122,8 +182,21 @@ export default function InterviewReportPage() {
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')}>
             ← Dashboard
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={() => toPDF()}>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => requirePremiumExport(() => toPDF())}
+            title={isPremium ? 'Download PDF' : 'Premium export locked'}
+            style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
+          >
             ↓ Download PDF
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => requirePremiumExport(downloadCSV)}
+            title={isPremium ? 'Export CSV' : 'Premium export locked'}
+            style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
+          >
+            Export CSV
           </button>
           <button className="btn btn-coral btn-sm"
             onClick={() => navigate('/interview/chat')}>
@@ -132,10 +205,48 @@ export default function InterviewReportPage() {
         </div>
       </nav>
 
+      {!isPremium && (
+        <div style={{ maxWidth: 820, margin: '18px auto 0', padding: '0 20px' }}>
+          <button
+            type="button"
+            onClick={() => setShowUpgradeModal(true)}
+            style={{
+              width: '100%',
+              textAlign: 'left',
+              border: '1.5px solid #fed7aa',
+              background: '#fff7ed',
+              color: '#9a3412',
+              borderRadius: 14,
+              padding: '14px 16px',
+              display: 'flex',
+              gap: 12,
+              alignItems: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{
+              flexShrink: 0,
+              borderRadius: 999,
+              background: 'var(--coral)',
+              color: '#fff',
+              fontSize: 11,
+              fontWeight: 800,
+              padding: '5px 9px',
+              letterSpacing: 0.4,
+            }}>
+              LOCKED
+            </span>
+            <span style={{ fontSize: 13, lineHeight: 1.5 }}>
+              PDF and CSV exports are a Premium feature. Upgrade to unlock detailed, shareable reports.
+            </span>
+          </button>
+        </div>
+      )}
+
       <div ref={targetRef} style={{ maxWidth: 820, margin: '0 auto', padding: '32px 20px' }}>
 
         {/* Header card */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: 28,
+        <div className="sk-report-panel" style={{ background: '#fff', borderRadius: 16, padding: 28,
           marginBottom: 20, border: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
@@ -361,6 +472,43 @@ export default function InterviewReportPage() {
           </div>
         )}
 
+        {nonVerbalTips.length > 0 && (
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+            marginBottom: 20, border: '1px solid var(--border)' }}>
+            <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700,
+              margin: '0 0 14px' }}>
+              Non-Verbal Coaching
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 12, marginBottom: 14 }}>
+              {[
+                { label: 'Eye Contact', value: eyeContactScore },
+                { label: 'Posture', value: postureScore },
+                { label: 'Presence', value: interview?.non_verbal_score },
+              ].map(item => (
+                <div key={item.label} style={{ padding: '12px', borderRadius: 10,
+                  background: 'var(--bg-page, #f8f5f0)', textAlign: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: scoreColor(item.value),
+                    fontFamily: 'var(--font-head)' }}>
+                    {item.value != null ? Math.round(item.value) : '-'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {nonVerbalTips.map((tip, i) => (
+              <div key={i} style={{ fontSize: 13, color: 'var(--text-muted)',
+                lineHeight: 1.6, padding: '10px 12px', borderRadius: 9,
+                background: i % 2 === 0 ? '#f0fdf4' : '#fff7ed',
+                marginBottom: 8 }}>
+                {tip}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Action Plan card */}
         {finalSummary && (finalSummary.top_strengths?.length > 0 || finalSummary.areas_for_improvement?.length > 0) && (
           <div style={{ background: '#fff', borderRadius: 16, padding: 24,
@@ -372,7 +520,7 @@ export default function InterviewReportPage() {
                 — what to keep doing &amp; what to work on
               </span>
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 14 }}>
               {/* Strengths */}
               {finalSummary.top_strengths?.length > 0 && (
                 <div style={{ background: '#f0fdf4', borderRadius: 12, padding: '14px 16px',
@@ -439,7 +587,7 @@ export default function InterviewReportPage() {
         )}
 
         {/* Q&A Transcript */}
-        <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+        <div className="sk-report-panel" style={{ background: '#fff', borderRadius: 16, padding: 24,
           border: '1px solid var(--border)' }}>
           <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
             📝 Full Transcript
@@ -483,16 +631,29 @@ export default function InterviewReportPage() {
                   )}
                 </div>
 
-                {/* Answer */}
-                <div style={{ marginBottom: round.evaluation ? 12 : 0,
-                  paddingLeft: 12, borderLeft: '3px solid var(--teal)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)',
-                    marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Your Answer
+                {/* Answer comparison */}
+                <div className="sk-dossier-compare" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 12,
+                  marginBottom: round.evaluation ? 12 : 0 }}>
+                  <div className="sk-dossier-page user" style={{ padding: '12px 14px', borderRadius: 10,
+                    background: '#eefcf9', border: '1px solid #bdeee6' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)',
+                      marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Your Actual Answer
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                      {round.answer}
+                    </p>
                   </div>
-                  <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                    {round.answer}
-                  </p>
+                  <div className="sk-dossier-page coach" style={{ padding: '12px 14px', borderRadius: 10,
+                    background: '#fff7ed', border: '1px solid #fed7aa' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#c2410c',
+                      marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      AI Coach Suggested Answer
+                    </div>
+                    <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                      {round.suggestedAnswer || 'A suggested answer will appear for new interviews after this update. Use the feedback below to refine this past response.'}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Evaluation */}
@@ -585,6 +746,7 @@ export default function InterviewReportPage() {
           </button>
         </div>
       </div>
+      <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
     </div>
   )
 }

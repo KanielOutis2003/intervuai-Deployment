@@ -18,6 +18,10 @@ const adminService = {
     const res = await api.get('/admin/analytics')
     return res.data.data
   },
+  async getSalesReport(range = '30d') {
+    const res = await api.get(`/admin/sales-report?range=${encodeURIComponent(range)}`)
+    return res.data.data
+  },
   async getPlatformTimeseries({ role, range, startDate, endDate } = {}) {
     const params = new URLSearchParams()
     if (role)      params.append('role', role)

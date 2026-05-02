@@ -90,7 +90,7 @@ export default function DemoModal({ onClose }) {
 
 const overlay = {
   position: 'fixed', inset: 0, zIndex: 9999,
-  background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+  background: 'rgba(0,0,0,0.58)',
   display: 'flex', alignItems: 'center', justifyContent: 'center',
 }
 

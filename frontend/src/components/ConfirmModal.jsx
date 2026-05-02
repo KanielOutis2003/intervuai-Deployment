@@ -66,7 +66,7 @@ export default function ConfirmModal({
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 10000,
-        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+        background: 'rgba(0,0,0,0.58)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 20, animation: 'fadeIn 0.15s ease',
       }}

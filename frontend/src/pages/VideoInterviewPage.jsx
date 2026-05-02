@@ -798,12 +798,12 @@ export default function VideoInterviewPage() {
               background: 'linear-gradient(160deg, #0c0f1a 0%, #13192b 60%, #0b0f1e 100%)',
               borderRadius: 16, minHeight: 440, overflow: 'hidden', marginBottom: 16,
               border: `1px solid ${isSpeaking ? 'rgba(0,200,140,0.25)' : 'rgba(255,255,255,0.06)'}`,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)', transition: 'border-color 0.4s',
+              boxShadow: '0 4px 5px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.08)', transition: 'border-color 0.4s',
             }}
           >
             <div style={{
               position: 'absolute', inset: 0, pointerEvents: 'none',
-              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)',
+              backgroundImage: 'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
               backgroundSize: '32px 32px',
             }} />
 
@@ -811,7 +811,7 @@ export default function VideoInterviewPage() {
             <div style={{
               position: 'absolute', top: 14, left: 14, zIndex: 10,
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)',
+              background: 'rgba(0,0,0,0.72)',
               borderRadius: 20, padding: '5px 12px',
               fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: 0.6,
               border: '1px solid rgba(255,255,255,0.08)',
@@ -836,7 +836,7 @@ export default function VideoInterviewPage() {
                 fontSize: 10, color: difficultyColor, fontWeight: 700, letterSpacing: 0.5,
               }}>{difficultyLabel}</span>
               <span style={{
-                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                background: 'rgba(0,0,0,0.62)',
                 borderRadius: 20, padding: '4px 11px',
                 fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace',
                 border: '1px solid rgba(255,255,255,0.07)',
@@ -854,20 +854,20 @@ export default function VideoInterviewPage() {
                   <AvatarCanvas audioRef={tts.audioRef} isSpeaking={isSpeaking} style={{
                     width: '100%', maxWidth: 340, height: 300, borderRadius: 20,
                     border: `2px solid ${isSpeaking ? 'rgba(0,200,140,0.35)' : 'rgba(255,255,255,0.06)'}`,
-                    boxShadow: isSpeaking ? '0 0 40px rgba(0,200,140,0.12)' : '0 4px 24px rgba(0,0,0,0.4)',
-                    transition: 'border-color 0.4s, box-shadow 0.4s',
+                    boxShadow: isSpeaking ? '0 0 5px rgba(0,200,140,0.28), inset 0 1px 2px rgba(255,255,255,0.08)' : '0 4px 5px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.06)',
+                    transition: 'border-color 0.4s, opacity 0.4s',
                   }} />
                 ) : (
                   <div style={{
                     width: 100, height: 100, borderRadius: '50%',
                     background: isSpeaking
-                      ? 'radial-gradient(circle at 40% 40%, rgba(0,200,140,0.25) 0%, rgba(0,200,140,0.06) 100%)'
+                      ? 'linear-gradient(145deg, rgba(0,200,140,0.22), rgba(0,200,140,0.08))'
                       : 'rgba(255,255,255,0.05)',
                     border: `2px solid ${isSpeaking ? 'rgba(0,200,140,0.55)' : 'rgba(255,255,255,0.1)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 42,
-                    boxShadow: isSpeaking ? '0 0 28px rgba(0,200,140,0.22)' : 'none',
-                    transition: 'all 0.4s ease',
+                    boxShadow: isSpeaking ? '0 0 5px rgba(0,200,140,0.28), inset 0 1px 2px rgba(255,255,255,0.08)' : 'inset 0 1px 2px rgba(255,255,255,0.06)',
+                    transition: 'border-color 0.4s ease-out, opacity 0.4s ease-out',
                   }}>👤</div>
                 )}
 
@@ -915,7 +915,7 @@ export default function VideoInterviewPage() {
                     borderRadius: 10, padding: '8px 12px',
                     fontSize: 11, fontWeight: 600, color: '#fff',
                     display: 'flex', alignItems: 'flex-start', gap: 7,
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+                    boxShadow: '0 4px 5px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.12)',
                     animation: 'nudgeFadeIn 0.3s ease',
                     lineHeight: 1.4,
                   }}>
@@ -927,7 +927,7 @@ export default function VideoInterviewPage() {
                   width: '100%', height: 148, borderRadius: 10,
                   border: `2px solid ${behavioralMetrics.faceDetected ? 'rgba(0,200,140,0.5)' : isCamOff ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.18)'}`,
                   overflow: 'hidden', background: '#000',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.6)', position: 'relative', transition: 'border-color 0.3s',
+                  boxShadow: '0 4px 5px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.08)', position: 'relative', transition: 'border-color 0.3s',
                 }}>
                   {isCamOff ? (
                     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.35)', gap: 6 }}>
@@ -977,7 +977,7 @@ export default function VideoInterviewPage() {
               <div style={{
                 position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
                 background: timeLeft < 30 ? 'rgba(210,55,55,0.88)' : 'rgba(0,0,0,0.65)',
-                backdropFilter: 'blur(6px)', borderRadius: 20, padding: '5px 18px',
+                borderRadius: 20, padding: '5px 18px',
                 fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: 'monospace', letterSpacing: 1,
                 border: timeLeft < 30 ? '1px solid rgba(210,80,80,0.6)' : '1px solid rgba(255,255,255,0.1)',
                 zIndex: 10,
@@ -987,7 +987,7 @@ export default function VideoInterviewPage() {
             {isComplete && (
               <div style={{
                 position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)',
-                background: 'rgba(0,160,100,0.88)', backdropFilter: 'blur(6px)',
+                background: 'rgba(0,160,100,0.88)',
                 borderRadius: 20, padding: '6px 20px',
                 fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 0.5,
                 border: '1px solid rgba(0,200,140,0.4)', whiteSpace: 'nowrap', zIndex: 10,
@@ -1068,8 +1068,8 @@ export default function VideoInterviewPage() {
                     border: canSubmit ? '1px solid rgba(0,200,140,0.6)' : '1px solid rgba(255,255,255,0.1)',
                     fontSize: 22, cursor: canSubmit ? 'pointer' : 'default',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 0.2s',
-                    boxShadow: canSubmit ? '0 4px 16px rgba(0,200,140,0.3)' : 'none',
+                    transition: 'transform 0.2s ease-out, border-color 0.2s ease-out, opacity 0.2s ease-out',
+                    boxShadow: canSubmit ? '0 4px 5px rgba(0,200,140,0.24), inset 0 1px 2px rgba(255,255,255,0.12)' : 'inset 0 1px 2px rgba(255,255,255,0.06)',
                   }}
                 >➤</button>
               </div>
@@ -1125,6 +1125,11 @@ export default function VideoInterviewPage() {
           <div className="video-controls">
             <button className={`vid-ctrl-btn ${isMuted ? 'red' : 'gray'}`} onClick={toggleMute} title={isMuted ? 'Unmute mic' : 'Mute mic'}>{isMuted ? '🔇' : '🎤'}</button>
             <button className={`vid-ctrl-btn ${isCamOff ? 'red' : 'gray'}`} onClick={toggleCamera} title={isCamOff ? 'Turn camera on' : 'Turn camera off'}>{isCamOff ? '📷' : '🎥'}</button>
+            <button className={`vid-ctrl-btn ${isListening ? 'active' : 'gray'}`} onClick={toggleVoice} disabled={isComplete || turnPhase !== 'USER_SPEAKING'}
+              title={isListening ? 'Stop voice input' : 'Start voice input'}
+              style={isListening ? { background: 'rgba(0,200,140,0.25)', border: '2px solid var(--teal)', boxShadow: '0 0 5px rgba(0,200,140,0.3), inset 0 1px 2px rgba(255,255,255,0.12)' } : {}}>
+              {isListening ? '⏹' : '🎙️'}
+            </button>
             <button className="vid-ctrl-btn gray" onClick={() => { setTurnPhase('AI_THINKING'); tts.stop(); if (currentQuestion && !currentQuestion.startsWith('⚠')) speakQuestion(currentQuestion) }}
               title="Replay question" style={{ fontSize: 16 }}>🔊</button>
             <button className={`vid-ctrl-btn ${showAvatar ? 'active' : 'gray'}`}

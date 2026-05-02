@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSubscription } from '../context/SubscriptionContext'
 import GCashPaymentModal from './GCashPaymentModal'
+import { toPHP } from '../utils/formatters'
 
 const FREE_FEATURES = [
   { text: '5 interviews/month', included: true },
@@ -20,8 +21,6 @@ const PREMIUM_FEATURES = [
   { text: 'Priority support', included: true },
 ]
 
-const USD_TO_PHP = 56
-
 export default function UpgradeModal({ isOpen, onClose }) {
   const { plans, subscribe } = useSubscription()
   const [showGCash, setShowGCash] = useState(false)
@@ -32,7 +31,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
   const premiumPlan = plans.find(p => p.price > 0 && p.name?.toLowerCase().includes('premium'))
     || plans.find(p => p.price > 0)
 
-  const phpAmount = premiumPlan ? Math.round(premiumPlan.price * USD_TO_PHP) : 0
+  const phpAmount = premiumPlan ? Math.round(toPHP(premiumPlan.price, { convertFromUSD: true })) : 0
 
   const handleGCashSuccess = async (planId) => {
     // Called by GCashPaymentModal after simulated payment — activates real subscription

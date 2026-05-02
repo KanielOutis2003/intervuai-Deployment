@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import resourceService from '../services/resourceService'
 import subscriptionService from '../services/subscriptionService'
 import { useSubscription } from '../context/SubscriptionContext'
+import { formatCurrency } from '../utils/formatters'
 
 const LogoIcon = () => (
   <div className="nav-logo-icon">
@@ -532,7 +533,7 @@ export default function ResourceHubPage() {
                 <div className="feat-card" key={p.id} style={{ textAlign: 'center' }}>
                   <h4 style={{ fontSize: 20, marginBottom: 8 }}>{p.name}</h4>
                   <div style={{ fontSize: 32, fontWeight: 800, fontFamily: 'var(--font-head)', color: 'var(--coral)', marginBottom: 8 }}>
-                    {p.price === 0 ? 'Free' : `$${p.price}`}
+                    {p.price === 0 ? 'Free' : formatCurrency(p.price, { convertFromUSD: true })}
                     {p.price > 0 && <span style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}>/mo</span>}
                   </div>
                   <p style={{ marginBottom: 16, fontSize: 13 }}>{p.description}</p>

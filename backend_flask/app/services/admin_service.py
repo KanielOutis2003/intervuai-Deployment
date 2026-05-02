@@ -389,6 +389,156 @@ class AdminService:
         except Exception as e:
             raise APIError(f"Failed to get platform time-series: {str(e)}", 500)
 
+    @staticmethod
+    def get_sales_report(range_key: Optional[str] = '30d') -> Dict[str, Any]:
+        """Aggregate subscription revenue and conversion metrics for admins."""
+        try:
+            now = datetime.utcnow()
+            days = {'7d': 7, '30d': 30, '90d': 90, 'all': None}.get(range_key or '30d', 30)
+            start_dt = now - timedelta(days=days - 1) if days else None
+
+            users_resp = supabase_admin.table('user_profiles').select('user_id, role', count='exact').execute()
+            total_users = users_resp.count or len(users_resp.data or [])
+
+            subs_resp = supabase_admin.table('user_subscriptions').select(
+                'id, user_id, status, started_at, created_at, cancelled_at, expires_at, '
+                'subscription_plans(name, price, billing_period)'
+            ).order('started_at', desc=True).execute()
+            subscriptions = subs_resp.data or []
+
+            email_map: Dict[str, str] = {}
+            try:
+                auth_resp = supabase_admin.auth.admin.list_users()
+                raw_users = auth_resp if isinstance(auth_resp, list) else getattr(auth_resp, 'users', [])
+                email_map = {
+                    str(getattr(u, 'id', '')): getattr(u, 'email', '')
+                    for u in (raw_users or [])
+                }
+            except Exception:
+                pass
+
+            paid_subs = []
+            for sub in subscriptions:
+                plan = sub.get('subscription_plans') or {}
+                price = float(plan.get('price') or 0)
+                if price <= 0:
+                    continue
+                paid_subs.append({**sub, '_price': price, '_plan': plan})
+
+            def in_range(sub: Dict[str, Any]) -> bool:
+                if not start_dt:
+                    return True
+                started = sub.get('started_at') or sub.get('created_at')
+                if not started:
+                    return False
+                try:
+                    sub_dt = datetime.fromisoformat(str(started).replace('Z', '+00:00')).replace(tzinfo=None)
+                    return sub_dt >= start_dt
+                except Exception:
+                    return False
+
+            period_paid_subs = [s for s in paid_subs if in_range(s)]
+            active_paid_subs = [s for s in paid_subs if s.get('status') == 'active']
+            active_paid_users = {str(s.get('user_id')) for s in active_paid_subs}
+            premium_paid_subs = [
+                s for s in paid_subs
+                if 'premium' in str((s.get('_plan') or {}).get('name') or '').lower()
+            ]
+            period_premium_subs = [s for s in premium_paid_subs if in_range(s)]
+            active_premium_subs = [s for s in premium_paid_subs if s.get('status') == 'active']
+            active_premium_users = {str(s.get('user_id')) for s in active_premium_subs}
+
+            revenue = round(sum(s['_price'] for s in period_paid_subs), 2)
+            premium_revenue = round(sum(s['_price'] for s in period_premium_subs), 2)
+            mrr = 0.0
+            for sub in active_paid_subs:
+                billing = (sub.get('_plan') or {}).get('billing_period') or 'monthly'
+                price = sub['_price']
+                if billing == 'yearly':
+                    mrr += price / 12
+                elif billing == 'monthly':
+                    mrr += price
+            mrr = round(mrr, 2)
+
+            plan_totals: Dict[str, Dict[str, Any]] = {}
+            for sub in period_paid_subs:
+                plan_name = (sub.get('_plan') or {}).get('name') or 'Paid Plan'
+                if plan_name not in plan_totals:
+                    plan_totals[plan_name] = {'plan': plan_name, 'revenue': 0.0, 'subscriptions': 0}
+                plan_totals[plan_name]['revenue'] += sub['_price']
+                plan_totals[plan_name]['subscriptions'] += 1
+
+            if start_dt:
+                trend_days = [(start_dt + timedelta(days=i)).date() for i in range((now.date() - start_dt.date()).days + 1)]
+            else:
+                raw_dates = []
+                for sub in period_paid_subs:
+                    started = sub.get('started_at') or sub.get('created_at')
+                    if started:
+                        try:
+                            raw_dates.append(datetime.fromisoformat(str(started).replace('Z', '+00:00')).date())
+                        except Exception:
+                            pass
+                trend_days = sorted(set(raw_dates))
+
+            revenue_by_day = {
+                d.isoformat(): {'date': d.isoformat(), 'revenue': 0.0, 'subscriptions': 0}
+                for d in trend_days
+            }
+            for sub in period_paid_subs:
+                started = sub.get('started_at') or sub.get('created_at')
+                if not started:
+                    continue
+                try:
+                    key = datetime.fromisoformat(str(started).replace('Z', '+00:00')).date().isoformat()
+                except Exception:
+                    continue
+                revenue_by_day.setdefault(key, {'date': key, 'revenue': 0.0, 'subscriptions': 0})
+                revenue_by_day[key]['revenue'] += sub['_price']
+                revenue_by_day[key]['subscriptions'] += 1
+
+            recent_transactions = []
+            for sub in period_paid_subs[:15]:
+                plan = sub.get('_plan') or {}
+                uid = str(sub.get('user_id') or '')
+                recent_transactions.append({
+                    'id': sub.get('id'),
+                    'userId': uid,
+                    'email': email_map.get(uid, ''),
+                    'planName': plan.get('name') or 'Paid Plan',
+                    'amount': sub['_price'],
+                    'billingPeriod': plan.get('billing_period') or 'monthly',
+                    'status': sub.get('status'),
+                    'startedAt': sub.get('started_at') or sub.get('created_at'),
+                    'cancelledAt': sub.get('cancelled_at'),
+                })
+
+            return {
+                'range': range_key or '30d',
+                'totalRevenue': revenue,
+                'monthlyRecurringRevenue': mrr,
+                'activePaidSubscriptions': len(active_paid_subs),
+                'activePremiumUsers': len(active_premium_users),
+                'newPaidSubscriptions': len(period_paid_subs),
+                'newPremiumSubscriptions': len(period_premium_subs),
+                'premiumRevenue': premium_revenue,
+                'conversionRate': round((len(active_premium_users) / total_users) * 100, 2) if total_users else 0,
+                'averageRevenuePerPaidUser': round(mrr / len(active_paid_users), 2) if active_paid_users else 0,
+                'totalUsers': total_users,
+                'revenueByPlan': [
+                    {**row, 'revenue': round(row['revenue'], 2)}
+                    for row in sorted(plan_totals.values(), key=lambda r: r['revenue'], reverse=True)
+                ],
+                'revenueTrend': [
+                    {**row, 'revenue': round(row['revenue'], 2)}
+                    for row in sorted(revenue_by_day.values(), key=lambda r: r['date'])
+                ],
+                'recentTransactions': recent_transactions,
+                'source': 'subscriptions',
+            }
+        except Exception as e:
+            raise APIError(f"Failed to get sales report: {str(e)}", 500)
+
     # ── Question Bank ─────────────────────────────────────────────────────────
 
     @staticmethod

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import DemoModal from '../components/DemoModal'
+import Testimonials from '../components/Testimonials'
 
 export default function LandingPage() {
   const navigate = useNavigate()
@@ -138,29 +139,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="testi-section">
-        <div className="testi-inner">
-          <div className="testi-header">
-            <h2 className="section-title">Loved by Job Seekers</h2>
-            <p className="section-sub">Join thousands who landed their dream jobs</p>
-          </div>
-          <div className="testi-cards">
-            {[
-              {init:'J', name:'John Doe', role:'Software Engineer', color:'#e8566a', text:'"IntervuAI helped me prepare for FAANG interviews. The AI feedback was spot-on and helped me improve my technical communication skills."'},
-              {init:'M', name:'Michael Chen', role:'Product Manager', color:'#3ecfbf', text:'"The personalized feedback is incredible. I went from nervous to confident in just five weeks. Got three job offers!"'},
-              {init:'E', name:'Emily Parker', role:'Marketing Director', color:'#f59e0b', text:'"Best investment in my career. The platform identified my weak points and helped me turn them into strengths."'},
-            ].map(t => (
-              <div className="testi-card" key={t.name}>
-                <div className="testi-avatar" style={{background:t.color}}>{t.init}</div>
-                <div className="testi-name">{t.name}</div>
-                <div className="testi-role">{t.role}</div>
-                <p className="testi-text">{t.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Testimonials />
 
       {/* CTA */}
       <section className="cta-section">

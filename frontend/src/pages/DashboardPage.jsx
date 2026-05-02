@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useSubscription } from '../context/SubscriptionContext'
 import interviewService from '../services/interviewService'
 import userService from '../services/userService'
+import analyticsService from '../services/analyticsService'
 import UpgradeModal from '../components/UpgradeModal'
 import AppTour from '../components/AppTour'
 import ConfirmModal from '../components/ConfirmModal'
@@ -14,6 +16,20 @@ const LogoIcon = () => (
     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-8v4h4l-5 8z"/></svg>
   </div>
 )
+
+const SkChartTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="sales-chart-tooltip">
+      <div className="sales-chart-tooltip-title">{label}</div>
+      {payload.map(item => (
+        <div key={item.dataKey} style={{ color: item.color, fontWeight: 700 }}>
+          {item.name}: {Math.round(item.value || 0)}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 // Fallback list used only when the admin has not added any job roles to the DB yet
 const FALLBACK_ROLES = [
@@ -56,6 +72,7 @@ export default function DashboardPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showTour, setShowTour] = useState(false)
   const [interviews, setInterviews] = useState([])
+  const [scoreTrend, setScoreTrend] = useState([])
   const [deletingId, setDeletingId] = useState(null)
   const [showJobModal, setShowJobModal] = useState(false)
   const [jobRole, setJobRole] = useState('')
@@ -108,6 +125,7 @@ export default function DashboardPage() {
     interviewService.getDashboard().then(setDashboard).catch(() => {})
     interviewService.getInterviews().then(d => setInterviews(d?.interviews || [])).catch(() => {})
     interviewService.getStats().then(setStats).catch(() => {})
+    analyticsService.getPerformance('all').then(d => setScoreTrend(d?.scoresOverTime || [])).catch(() => {})
     userService.getPreferences().then(p => {
       if (p) {
         setPreferences(prev => ({ ...prev, ...p }))
@@ -334,6 +352,16 @@ export default function DashboardPage() {
     }
   }
 
+  const trendScores = scoreTrend.filter(s =>
+    (s.overallScore || 0) > 0 || (s.verbalScore || 0) > 0 || (s.nonVerbalScore || 0) > 0
+  )
+  const trendWidth = Math.max(trendScores.length * 80, 420)
+  const trendMax = Math.max(
+    100,
+    ...trendScores.map(s => Math.max(s.overallScore || 0, s.verbalScore || 0, s.nonVerbalScore || 0))
+  )
+  const trendPoint = (score, i) => `${i * 80 + 44},${200 - ((score || 0) / trendMax) * 172}`
+
   return (
     <div className={`${preferences.highContrast ? 'high-contrast' : ''} ${preferences.largeFont ? 'large-font' : ''} ${preferences.reducedMotion ? 'reduced-motion' : ''}`}>
       {/* Nav */}
@@ -467,6 +495,46 @@ export default function DashboardPage() {
             <div className="kpi-label">Best Score</div>
             <div className="kpi-trend">Personal best</div>
           </div>
+        </div>
+
+        <div className="chart-card" style={{ marginBottom: 28 }}>
+          <div className="chart-card-header">
+            <div>
+              <h3>Progress Trend</h3>
+              <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
+                Overall, verbal, and non-verbal scores across completed interviews
+              </p>
+            </div>
+            <Link to="/analytics" className="btn btn-ghost btn-sm">Detailed Analytics</Link>
+          </div>
+          {trendScores.length > 0 ? (
+            <>
+              <div className="line-chart">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendScores} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="date" tickFormatter={v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, trendMax]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
+                    <Tooltip content={<SkChartTooltip />} />
+                    <Line type="monotone" name="Overall" dataKey="overallScore" stroke="var(--coral)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1200} animationEasing="ease-out" />
+                    <Line type="monotone" name="Verbal" dataKey="verbalScore" stroke="var(--teal)" strokeWidth={2.5} strokeDasharray="6 4" dot={false} animationDuration={1250} animationEasing="ease-out" />
+                    <Line type="monotone" name="Non-Verbal" dataKey="nonVerbalScore" stroke="var(--purple)" strokeWidth={2.5} strokeDasharray="3 4" dot={false} animationDuration={1300} animationEasing="ease-out" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="chart-legend">
+                <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--coral)' }}></div>Overall</div>
+                <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--teal)' }}></div>Verbal</div>
+                <div className="legend-item"><div className="legend-dot" style={{ background: 'var(--purple)' }}></div>Non-Verbal</div>
+              </div>
+            </>
+          ) : (
+            <div style={{ height: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: 8 }}>
+              <div style={{ fontSize: 30 }}>ðŸ“ˆ</div>
+              <div style={{ fontWeight: 700 }}>Complete an interview to see your trend</div>
+              <div style={{ fontSize: 13 }}>Scores will appear here automatically after each completed session.</div>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions + Skills */}
