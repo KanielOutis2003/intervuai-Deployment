@@ -28,36 +28,38 @@ export default class ErrorBoundary extends Component {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#f9fafb',
+          background: 'var(--bg-page, #f9fafb)',
           padding: '32px',
           textAlign: 'center',
         }}>
           <div style={{
-            background: '#fff',
+            background: 'var(--card, #fff)',
+            color: 'var(--text, #111827)',
+            border: '1px solid var(--border, #e5e7eb)',
             borderRadius: '16px',
             padding: '48px 40px',
             maxWidth: '480px',
-            boxShadow: '0 4px 24px rgba(0,0,0,.08)',
+            boxShadow: '0 18px 46px rgba(0,0,0,.5)',
           }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-            <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, color: '#1a1a2e' }}>
+            <h2 style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, color: 'var(--text, #1a1a2e)' }}>
               Something went wrong
             </h2>
-            <p style={{ color: '#6b7280', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
+            <p style={{ color: 'var(--text-muted, #6b7280)', fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
               An unexpected error occurred. This has been logged automatically.
               Please reload the page to continue.
             </p>
             {this.state.error && (
               <details style={{ marginBottom: 24, textAlign: 'left' }}>
-                <summary style={{ cursor: 'pointer', fontSize: 12, color: '#9ca3af', marginBottom: 8 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--text-light, #9ca3af)', marginBottom: 8 }}>
                   Error details
                 </summary>
                 <pre style={{
-                  background: '#f3f4f6',
+                  background: 'var(--bg, #f3f4f6)',
                   borderRadius: 8,
                   padding: '12px',
                   fontSize: 11,
-                  color: '#374151',
+                  color: 'var(--text, #374151)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                 }}>

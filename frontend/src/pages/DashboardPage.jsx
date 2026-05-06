@@ -169,7 +169,7 @@ export default function DashboardPage() {
   const confirmLogout = async () => {
     setShowLogoutModal(false)
     await logout()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   const handleUpdatePreference = async (key, val) => {
@@ -512,9 +512,9 @@ export default function DashboardPage() {
               <div className="line-chart">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendScores} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
-                    <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
-                    <XAxis dataKey="date" tickFormatter={v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                    <YAxis domain={[0, trendMax]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
+                    <CartesianGrid stroke="var(--chart-led-grid)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="date" tickFormatter={v => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                    <YAxis domain={[0, trendMax]} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
                     <Tooltip content={<SkChartTooltip />} />
                     <Line type="monotone" name="Overall" dataKey="overallScore" stroke="var(--coral)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1200} animationEasing="ease-out" />
                     <Line type="monotone" name="Verbal" dataKey="verbalScore" stroke="var(--teal)" strokeWidth={2.5} strokeDasharray="6 4" dot={false} animationDuration={1250} animationEasing="ease-out" />
@@ -694,7 +694,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
           onClick={e => { if (e.target === e.currentTarget) closeModal() }}
         >
-          <div style={{background:'var(--card)',borderRadius:18,padding:36,width:460,boxShadow:'0 8px 40px rgba(0,0,0,0.2)',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:460,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
             <h3 style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,marginBottom:6}}>
               {interviewType === 'video' ? '🎥 Start Video Interview' : '💬 Start Chat Interview'}
             </h3>
@@ -737,7 +737,7 @@ export default function DashboardPage() {
               {dropdownOpen && (
                 <div style={{
                   position:'absolute',top:'calc(100% + 4px)',left:0,right:0,
-                  background:'var(--card)',border:'1.5px solid #e5e7eb',borderRadius:10,
+                  background:'var(--card)',border:'1.5px solid var(--border)',borderRadius:10,
                   boxShadow:'0 4px 20px rgba(0,0,0,0.12)',zIndex:10,
                   maxHeight:220,overflowY:'auto',
                 }}>
@@ -755,7 +755,7 @@ export default function DashboardPage() {
                           background: role === jobRole ? 'var(--coral-light)' : 'transparent',
                           fontWeight: role === jobRole ? 600 : 400,
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
                         onMouseLeave={e => e.currentTarget.style.background = role === jobRole ? 'var(--coral-light, #fff5f3)' : 'transparent'}
                       >
                         {role}
@@ -785,7 +785,8 @@ export default function DashboardPage() {
                     style={{
                       padding:'10px 12px', borderRadius:10, border: questionCategory === t.value
                         ? '2px solid var(--coral)' : '1.5px solid var(--border)',
-                      background: questionCategory === t.value ? 'var(--coral-light, #fff5f3)' : '#fff',
+                      background: questionCategory === t.value ? 'var(--coral-light, #fff5f3)' : 'var(--card)',
+                      color: 'var(--text)',
                       cursor:'pointer', textAlign:'left', fontFamily:'inherit', transition:'all 0.15s',
                     }}
                   >
@@ -828,7 +829,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
           onClick={e => { if (e.target === e.currentTarget) setShowSettingsModal(false) }}
         >
-          <div style={{background:'var(--card)',borderRadius:18,padding:36,width:560,boxShadow:'0 8px 40px rgba(0,0,0,0.2)',maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
+          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:560,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
               <h3 style={{fontFamily:'var(--font-head)',fontSize:24,fontWeight:700}}>Settings</h3>
               <button onClick={() => setShowSettingsModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-muted)'}}>✕</button>
@@ -864,7 +865,7 @@ export default function DashboardPage() {
                           autoFocus
                           style={{width:'100%',padding:'9px 12px',borderRadius:9,fontSize:13,
                             border:`1.5px solid ${nameError ? 'var(--coral)' : 'var(--border)'}`,
-                            background:'var(--bg)',color:'var(--text)',outline:'none',boxSizing:'border-box'}}
+                            background:'var(--sk-input-bg)',color:'var(--text)',outline:'none',boxSizing:'border-box',boxShadow:'var(--sk-input-shadow)'}}
                         />
                         {nameError && <p style={{fontSize:12,color:'var(--coral)',margin:0}}>{nameError}</p>}
                         <div style={{display:'flex',gap:8}}>
@@ -907,8 +908,8 @@ export default function DashboardPage() {
                         value={profileExt.targetIndustry}
                         onChange={e => setProfileExt(p => ({...p, targetIndustry: e.target.value}))}
                         style={{width:'100%',padding:'9px 12px',borderRadius:9,fontSize:13,
-                          border:'1.5px solid var(--border)',background:'var(--bg)',color:'var(--text)',
-                          outline:'none',boxSizing:'border-box'}}
+                          border:'1.5px solid var(--sk-input-border)',background:'var(--sk-input-bg)',color:'var(--text)',
+                          outline:'none',boxSizing:'border-box',boxShadow:'var(--sk-input-shadow)'}}
                       />
                     </div>
 
@@ -919,8 +920,8 @@ export default function DashboardPage() {
                         value={profileExt.experienceLevel}
                         onChange={e => setProfileExt(p => ({...p, experienceLevel: e.target.value}))}
                         style={{width:'100%',padding:'9px 12px',borderRadius:9,fontSize:13,
-                          border:'1.5px solid var(--border)',background:'var(--bg)',color:'var(--text)',
-                          outline:'none',boxSizing:'border-box',cursor:'pointer'}}
+                          border:'1.5px solid var(--sk-input-border)',background:'var(--sk-input-bg)',color:'var(--text)',
+                          outline:'none',boxSizing:'border-box',cursor:'pointer',boxShadow:'var(--sk-input-shadow)'}}
                       >
                         <option value="">Select level…</option>
                         <option value="entry">Entry Level (0–2 yrs)</option>
@@ -939,7 +940,7 @@ export default function DashboardPage() {
                         <label style={{
                           display:'inline-flex',alignItems:'center',gap:6,
                           padding:'7px 14px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',
-                          background:'var(--teal)',color:'#fff',whiteSpace:'nowrap',
+                          background:'var(--teal)',color:'var(--text-on-teal)',whiteSpace:'nowrap',
                           opacity: resumeUploading ? 0.7 : 1,
                           pointerEvents: resumeUploading ? 'none' : 'auto',
                         }}>
@@ -968,8 +969,8 @@ export default function DashboardPage() {
                         value={profileExt.resumeUrl}
                         onChange={e => setProfileExt(p => ({...p, resumeUrl: e.target.value}))}
                         style={{width:'100%',padding:'9px 12px',borderRadius:9,fontSize:13,
-                          border:'1.5px solid var(--border)',background:'var(--bg)',color:'var(--text)',
-                          outline:'none',boxSizing:'border-box'}}
+                          border:'1.5px solid var(--sk-input-border)',background:'var(--sk-input-bg)',color:'var(--text)',
+                          outline:'none',boxSizing:'border-box',boxShadow:'var(--sk-input-shadow)'}}
                       />
                       {profileExt.resumeUrl && (
                         <a href={profileExt.resumeUrl} target="_blank" rel="noopener noreferrer"
@@ -1053,14 +1054,14 @@ export default function DashboardPage() {
                   {isPremium && (
                     <div className="settings-row" style={{borderTop:'1px solid var(--border)',paddingTop:16,marginTop:8}}>
                       <div className="settings-info">
-                        <h4 style={{color:'#e53e3e'}}>Cancel Subscription</h4>
+                        <h4 style={{color:'var(--danger)'}}>Cancel Subscription</h4>
                         <p>Your account will revert to Free tier immediately.</p>
                       </div>
                       <button
                         className="btn btn-sm"
                         style={{
                           background:'rgba(229,62,62,0.1)',border:'1px solid rgba(229,62,62,0.35)',
-                          color:'#e53e3e',borderRadius:8,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600,whiteSpace:'nowrap',
+                          color:'var(--danger)',borderRadius:8,padding:'6px 14px',cursor:'pointer',fontSize:13,fontWeight:600,whiteSpace:'nowrap',
                         }}
                         onClick={() => {
                           setCfModal({
@@ -1122,8 +1123,8 @@ export default function DashboardPage() {
                       onChange={e => setColorBlindMode(e.target.value)}
                       style={{
                         padding: '6px 10px', borderRadius: 8, fontSize: 13,
-                        border: '1.5px solid var(--border)', background: 'var(--bg)',
-                        color: 'var(--text)', cursor: 'pointer',
+                        border: '1.5px solid var(--sk-input-border)', background: 'var(--sk-input-bg)',
+                        color: 'var(--text)', cursor: 'pointer', boxShadow: 'var(--sk-input-shadow)',
                       }}
                     >
                       <option value="none">None</option>
@@ -1167,7 +1168,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100}}
           onClick={e => { if (e.target === e.currentTarget) setShowLogoutModal(false) }}
         >
-          <div style={{background:'var(--card)',borderRadius:18,padding:36,width:400,boxShadow:'0 8px 40px rgba(0,0,0,0.2)',textAlign:'center'}}>
+          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:400,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',textAlign:'center'}}>
             <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,#ff6b6b22,#ff6b6b11)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px',fontSize:28}}>
               👋
             </div>

@@ -107,11 +107,11 @@ function ResourceModal({ resource, onClose }) {
       onClick={onClose}
     >
       <div
-        style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.35)', display: 'flex', flexDirection: 'column' }}
+        style={{ background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 20, width: '100%', maxWidth, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 24px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Sticky header */}
-        <div style={{ padding: '22px 28px 16px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: '#fff', zIndex: 2, borderRadius: '20px 20px 0 0', flexShrink: 0 }}>
+        <div style={{ padding: '22px 28px 16px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--card)', zIndex: 2, borderRadius: '20px 20px 0 0', flexShrink: 0 }}>
           <button onClick={onClose} style={{ position: 'absolute', right: 18, top: 16, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-muted)', lineHeight: 1, padding: 4 }}>✕</button>
           <div style={{ display: 'flex', gap: 7, marginBottom: 10, flexWrap: 'wrap', paddingRight: 36 }}>
             <span className="tag tag-coral">{typeIcon} {resource.resourceType || 'resource'}</span>
@@ -186,13 +186,13 @@ function ResourceModal({ resource, onClose }) {
               {isTemplate ? (
                 /* Template: document-style preview */
                 <div style={{ border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
-                  <div style={{ background: '#f7f7f8', padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ background: 'var(--bg)', padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>📄 DOCUMENT TEMPLATE</span>
                     <button onClick={handleCopy} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: copied ? 'var(--teal-dark)' : 'var(--coral)', fontWeight: 700, padding: '4px 8px', borderRadius: 6 }}>
                       {copied ? '✓ Copied' : '📋 Copy'}
                     </button>
                   </div>
-                  <div style={{ padding: '20px 22px', fontFamily: "'Georgia', serif", fontSize: 13.5, lineHeight: 1.9, background: '#fff' }}>
+                  <div style={{ padding: '20px 22px', fontFamily: "'Georgia', serif", fontSize: 13.5, lineHeight: 1.9, background: 'var(--card)', color: 'var(--text)' }}>
                     <RichContent text={body} />
                   </div>
                 </div>
@@ -236,7 +236,7 @@ function SubscriptionModal({ plan, subscribing, onConfirm, onClose }) {
       onClick={() => !subscribing && onClose()}
     >
       <div
-        style={{ background: '#fff', borderRadius: 18, padding: 32, width: '100%', maxWidth: 450, boxShadow: '0 20px 50px rgba(0,0,0,0.3)', textAlign: 'center' }}
+        style={{ background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 18, padding: 32, width: '100%', maxWidth: 450, boxShadow: '0 20px 50px rgba(0,0,0,0.5)', textAlign: 'center' }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>

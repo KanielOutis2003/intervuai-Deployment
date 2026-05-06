@@ -609,9 +609,9 @@ function SalesReportTab() {
                         <stop offset="95%" stopColor="var(--coral)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" vertical={false} />
-                    <XAxis dataKey="dateLabel" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={18} />
-                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
+                    <CartesianGrid stroke="var(--chart-led-grid)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="dateLabel" tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={18} />
+                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
                     <Tooltip content={<SalesChartTooltip />} cursor={{ stroke: 'var(--coral)', strokeDasharray: '4 4' }} />
                     <Area type="monotone" dataKey="revenue" stroke="var(--coral)" strokeWidth={3} fill="url(#salesRevenueGradient)" activeDot={{ r: 6 }} animationDuration={900} animationEasing="ease-out" />
                   </AreaChart>
@@ -627,9 +627,9 @@ function SalesReportTab() {
               <div className="sk-led-panel" style={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer>
                   <BarChart data={premiumChartData} margin={{ top: 16, right: 18, left: 8, bottom: 8 }}>
-                    <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" vertical={false} />
-                    <XAxis dataKey="plan" tick={{ fill: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }} tickLine={false} axisLine={false} />
-                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
+                    <CartesianGrid stroke="var(--chart-led-grid)" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="plan" tick={{ fill: 'var(--chart-led-axis)', fontSize: 12, fontWeight: 700 }} tickLine={false} axisLine={false} />
+                    <YAxis tickFormatter={v => money(v, { maximumFractionDigits: 0 })} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} width={72} />
                     <Tooltip content={<SalesChartTooltip />} cursor={{ fill: 'rgba(62,207,191,0.08)' }} />
                     <Bar dataKey="revenue" fill="var(--teal)" radius={[10, 10, 4, 4]} maxBarSize={88} animationDuration={800} animationEasing="ease-out" />
                   </BarChart>
@@ -1349,7 +1349,7 @@ function QuestionsTab() {
       }
     >
       {/* Info banner */}
-      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 12, color: '#166534' }}>
+      <div style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.32)', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 12, color: 'var(--teal)' }}>
         <strong>How it works:</strong> Questions here are injected as seed questions into the AI's system prompt when users start an interview matching the same job role and interview type. The AI uses these as reference questions to ask.
       </div>
 
@@ -2341,7 +2341,7 @@ export default function AdminDashboardPage() {
     setError('')
     try {
       await logout()
-      navigate('/login')
+      navigate('/')
     } catch (err) {
       console.error('Logout failed:', err)
       setError('Logout failed. Please try again.')

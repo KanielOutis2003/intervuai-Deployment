@@ -31,8 +31,8 @@ export default function ProtectedRoute({ children }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f9fafb',
-        color: '#6b7280',
+        background: 'var(--bg-page, #f9fafb)',
+        color: 'var(--text-muted, #6b7280)',
         fontSize: 14,
         gap: 10,
       }}>

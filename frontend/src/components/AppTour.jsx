@@ -211,11 +211,13 @@ const svgStyle = {
 
 const tooltipStyle = {
   background: 'var(--card, #fff)',
+  color: 'var(--text, #2e2b27)',
+  border: '1px solid var(--border, #e0dcd4)',
   borderRadius: 14,
   padding: '20px 24px',
   maxWidth: 340,
   width: '90vw',
-  boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+  boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
 }
 
 const progressRow = {

@@ -170,9 +170,9 @@ export default function AnalyticsPage() {
                     <div className="line-chart">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={scores} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
-                          <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
-                          <XAxis dataKey="jobRole" tickFormatter={(v, i) => v ? String(v).split(' ')[0] : `#${i + 1}`} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                          <YAxis domain={[0, maxScore]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
+                          <CartesianGrid stroke="var(--chart-led-grid)" strokeDasharray="4 4" vertical={false} />
+                          <XAxis dataKey="jobRole" tickFormatter={(v, i) => v ? String(v).split(' ')[0] : `#${i + 1}`} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                          <YAxis domain={[0, maxScore]} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} />
                           <Tooltip content={<SkChartTooltip />} />
                           <Line type="monotone" name="Overall" dataKey="overallScore" stroke="var(--coral)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1200} animationEasing="ease-out" />
                           <Line type="monotone" name="Verbal" dataKey="verbalScore" stroke="var(--teal)" strokeWidth={2.5} strokeDasharray="6 4" dot={false} animationDuration={1250} animationEasing="ease-out" />
@@ -234,14 +234,14 @@ export default function AnalyticsPage() {
                     <h3 style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,marginBottom:16}}>Improvement Trend</h3>
                     {scores.length >= 2 ? (
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
-                        <div style={{textAlign:'center',padding:20,background:'var(--bg)',borderRadius:12}}>
+                        <div style={{textAlign:'center',padding:20,background:'var(--sk-recessed)',borderRadius:12,boxShadow:'var(--sk-input-shadow)'}}>
                           <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>First Session</div>
                           <div style={{fontFamily:'var(--font-head)',fontSize:28,fontWeight:700,color:'var(--coral)'}}>
                             {Math.round(scores[0]?.overallScore || 0)}
                           </div>
                           <div style={{fontSize:11,color:'var(--text-muted)'}}>{scores[0]?.jobRole || 'Interview'}</div>
                         </div>
-                        <div style={{textAlign:'center',padding:20,background:'var(--bg)',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                        <div style={{textAlign:'center',padding:20,background:'var(--sk-recessed)',borderRadius:12,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',boxShadow:'var(--sk-input-shadow)'}}>
                           <div style={{fontSize:32,marginBottom:4}}>
                             {(progress?.improvement ?? 0) > 0 ? '\u2191' : (progress?.improvement ?? 0) < 0 ? '\u2193' : '\u2192'}
                           </div>
@@ -249,7 +249,7 @@ export default function AnalyticsPage() {
                             {(progress?.improvement ?? 0) > 0 ? '+' : ''}{Math.round(progress?.improvement ?? 0)} pts
                           </div>
                         </div>
-                        <div style={{textAlign:'center',padding:20,background:'var(--bg)',borderRadius:12}}>
+                        <div style={{textAlign:'center',padding:20,background:'var(--sk-recessed)',borderRadius:12,boxShadow:'var(--sk-input-shadow)'}}>
                           <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>Latest Session</div>
                           <div style={{fontFamily:'var(--font-head)',fontSize:28,fontWeight:700,color:'var(--teal-dark)'}}>
                             {Math.round(scores[scores.length - 1]?.overallScore || 0)}
@@ -296,9 +296,9 @@ export default function AnalyticsPage() {
                   <div className="bar-chart">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={Object.entries(distData).map(([range, count]) => ({ range, count }))} margin={{ top: 12, right: 18, left: 0, bottom: 10 }}>
-                        <CartesianGrid stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" vertical={false} />
-                        <XAxis dataKey="range" tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} />
-                        <YAxis domain={[0, distMax]} tick={{ fill: 'rgba(255,255,255,0.58)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} allowDecimals={false} />
+                        <CartesianGrid stroke="var(--chart-led-grid)" strokeDasharray="4 4" vertical={false} />
+                        <XAxis dataKey="range" tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} />
+                        <YAxis domain={[0, distMax]} tick={{ fill: 'var(--chart-led-axis)', fontSize: 11 }} tickLine={false} axisLine={false} width={34} allowDecimals={false} />
                         <Tooltip content={<SkChartTooltip />} />
                         <Bar name="Sessions" dataKey="count" fill="var(--teal)" radius={[10, 10, 4, 4]} maxBarSize={54} animationDuration={1050} animationEasing="ease-out" />
                       </BarChart>

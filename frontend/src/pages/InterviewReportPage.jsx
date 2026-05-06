@@ -28,6 +28,16 @@ const ScoreRing = ({ value, color, label }) => {
   )
 }
 
+const isCoachFeedback = (text = '') => {
+  const normalized = text.trim().toLowerCase()
+  if (!normalized) return false
+  return /^(feedback|great job|excellent|strong answer|well done|nice work)\b/.test(normalized)
+}
+
+const cleanCoachText = (text = '') => (
+  text.trim().replace(/^(feedback|suggested answer)\s*:\s*/i, '')
+)
+
 export default function InterviewReportPage() {
   const { interviewId } = useParams()
   const navigate = useNavigate()
@@ -88,12 +98,14 @@ export default function InterviewReportPage() {
     if (messages[i].role === 'user') {
       const questionMsg = messages[i - 1]  // AI message before = the question
       const evalMsg = messages[i + 1]      // AI message after = evaluation + next question
+      const suggestedAnswer = evalMsg?.metadata?.evaluation?.suggested_answer || evalMsg?.metadata?.suggested_answer || ''
       qaRounds.push({
         questionNum: qaRounds.length + 1,
         question: questionMsg?.content || '',
         answer: messages[i].content,
         evaluation: evalMsg?.metadata?.evaluation || null,
-        suggestedAnswer: evalMsg?.metadata?.evaluation?.suggested_answer || evalMsg?.metadata?.suggested_answer || '',
+        suggestedAnswer,
+        isCoachFeedback: isCoachFeedback(suggestedAnswer),
         timestamp: messages[i].timestamp,
       })
     }
@@ -142,11 +154,11 @@ export default function InterviewReportPage() {
   const downloadCSV = () => {
     const esc = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`
     const rows = [
-      ['Question', 'User Answer', 'AI Coach Suggested Answer', 'Overall Score', 'Feedback'],
+      ['Question', 'User Answer', 'AI Coach Feedback / Suggested Answer', 'Overall Score', 'Feedback'],
       ...qaRounds.map(r => [
         r.question,
         r.answer,
-        r.suggestedAnswer,
+        cleanCoachText(r.suggestedAnswer) || 'No specific feedback generated for this response.',
         r.evaluation?.overall_quality ?? '',
         r.evaluation?.feedback ?? '',
       ]),
@@ -167,7 +179,7 @@ export default function InterviewReportPage() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-page, #f8f5f0)' }}>
       {/* Nav */}
       <nav style={{
-        background: '#fff', borderBottom: '1px solid var(--border)',
+        background: 'var(--card)', borderBottom: '1px solid var(--border)',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
@@ -214,8 +226,8 @@ export default function InterviewReportPage() {
               width: '100%',
               textAlign: 'left',
               border: '1.5px solid #fed7aa',
-              background: '#fff7ed',
-              color: '#9a3412',
+              background: 'rgba(251,146,60,0.14)',
+              color: 'var(--warning)',
               borderRadius: 14,
               padding: '14px 16px',
               display: 'flex',
@@ -246,7 +258,7 @@ export default function InterviewReportPage() {
       <div ref={targetRef} style={{ maxWidth: 820, margin: '0 auto', padding: '32px 20px' }}>
 
         {/* Header card */}
-        <div className="sk-report-panel" style={{ background: '#fff', borderRadius: 16, padding: 28,
+        <div className="sk-report-panel" style={{ background: 'var(--card)', color: 'var(--text)', borderRadius: 16, padding: 28,
           marginBottom: 20, border: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
@@ -368,7 +380,7 @@ export default function InterviewReportPage() {
 
         {/* Final AI Summary */}
         {finalSummary && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+          <div style={{ background: 'var(--card)', color: 'var(--text)', borderRadius: 16, padding: 24,
             marginBottom: 20, border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700, margin: 0 }}>
@@ -460,8 +472,8 @@ export default function InterviewReportPage() {
                   <div key={i} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 8,
                     padding: '10px 12px', borderRadius: 8,
-                    background: '#ede9fe', marginBottom: 6,
-                    fontSize: 13, color: '#6d28d9', lineHeight: 1.5,
+                    background: 'rgba(139,92,246,0.16)', marginBottom: 6,
+                    fontSize: 13, color: 'var(--purple)', lineHeight: 1.5,
                   }}>
                     <span style={{ flexShrink: 0 }}>💡</span>
                     <span>{tip}</span>
@@ -473,7 +485,7 @@ export default function InterviewReportPage() {
         )}
 
         {nonVerbalTips.length > 0 && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+          <div style={{ background: 'var(--card)', color: 'var(--text)', borderRadius: 16, padding: 24,
             marginBottom: 20, border: '1px solid var(--border)' }}>
             <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700,
               margin: '0 0 14px' }}>
@@ -501,7 +513,7 @@ export default function InterviewReportPage() {
             {nonVerbalTips.map((tip, i) => (
               <div key={i} style={{ fontSize: 13, color: 'var(--text-muted)',
                 lineHeight: 1.6, padding: '10px 12px', borderRadius: 9,
-                background: i % 2 === 0 ? '#f0fdf4' : '#fff7ed',
+                background: i % 2 === 0 ? 'rgba(34,197,94,0.12)' : 'rgba(251,146,60,0.14)',
                 marginBottom: 8 }}>
                 {tip}
               </div>
@@ -511,7 +523,7 @@ export default function InterviewReportPage() {
 
         {/* Action Plan card */}
         {finalSummary && (finalSummary.top_strengths?.length > 0 || finalSummary.areas_for_improvement?.length > 0) && (
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24,
+          <div style={{ background: 'var(--card)', color: 'var(--text)', borderRadius: 16, padding: 24,
             marginBottom: 20, border: '1px solid var(--border)' }}>
             <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700,
               margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -523,7 +535,7 @@ export default function InterviewReportPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 14 }}>
               {/* Strengths */}
               {finalSummary.top_strengths?.length > 0 && (
-                <div style={{ background: '#f0fdf4', borderRadius: 12, padding: '14px 16px',
+                <div style={{ background: 'rgba(34,197,94,0.12)', borderRadius: 12, padding: '14px 16px',
                   border: '1.5px solid #bbf7d0' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#15803d',
                     marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.6,
@@ -534,8 +546,8 @@ export default function InterviewReportPage() {
                     <div key={i} style={{
                       display: 'flex', alignItems: 'flex-start', gap: 8,
                       padding: '8px 10px', borderRadius: 8,
-                      background: '#dcfce7', marginBottom: 6,
-                      fontSize: 13, color: '#166534', lineHeight: 1.5,
+                      background: 'rgba(34,197,94,0.14)', marginBottom: 6,
+                      fontSize: 13, color: 'var(--video-good, #166534)', lineHeight: 1.5,
                     }}>
                       <span style={{ color: '#16a34a', fontWeight: 700, flexShrink: 0 }}>✓</span>
                       {s}
@@ -545,9 +557,9 @@ export default function InterviewReportPage() {
               )}
               {/* Improvements */}
               {finalSummary.areas_for_improvement?.length > 0 && (
-                <div style={{ background: '#fff7ed', borderRadius: 12, padding: '14px 16px',
+                <div style={{ background: 'rgba(251,146,60,0.14)', borderRadius: 12, padding: '14px 16px',
                   border: '1.5px solid #fed7aa' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c',
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning)',
                     marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.6,
                     display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 14 }}>🎯</span> Work On Next
@@ -556,8 +568,8 @@ export default function InterviewReportPage() {
                     <div key={i} style={{
                       display: 'flex', alignItems: 'flex-start', gap: 8,
                       padding: '8px 10px', borderRadius: 8,
-                      background: '#ffedd5', marginBottom: 6,
-                      fontSize: 13, color: '#9a3412', lineHeight: 1.5,
+                      background: 'rgba(251,146,60,0.18)', marginBottom: 6,
+                      fontSize: 13, color: 'var(--warning)', lineHeight: 1.5,
                     }}>
                       <span style={{ color: '#ea580c', fontWeight: 700, flexShrink: 0 }}>→</span>
                       {a}
@@ -567,7 +579,7 @@ export default function InterviewReportPage() {
               )}
             </div>
             {finalSummary.coaching_tips?.length > 0 && (
-              <div style={{ marginTop: 14, background: '#f5f3ff', borderRadius: 12,
+              <div style={{ marginTop: 14, background: 'rgba(139,92,246,0.14)', borderRadius: 12,
                 padding: '14px 16px', border: '1.5px solid #ddd6fe' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#6d28d9',
                   marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>
@@ -575,7 +587,7 @@ export default function InterviewReportPage() {
                 </div>
                 <ol style={{ margin: 0, paddingLeft: 18 }}>
                   {finalSummary.coaching_tips.map((tip, i) => (
-                    <li key={i} style={{ fontSize: 13, color: '#5b21b6', lineHeight: 1.6,
+                    <li key={i} style={{ fontSize: 13, color: 'var(--purple)', lineHeight: 1.6,
                       marginBottom: 4 }}>
                       {tip}
                     </li>
@@ -587,7 +599,7 @@ export default function InterviewReportPage() {
         )}
 
         {/* Q&A Transcript */}
-        <div className="sk-report-panel" style={{ background: '#fff', borderRadius: 16, padding: 24,
+        <div className="sk-report-panel" style={{ background: 'var(--card)', color: 'var(--text)', borderRadius: 16, padding: 24,
           border: '1px solid var(--border)' }}>
           <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
             📝 Full Transcript
@@ -635,7 +647,7 @@ export default function InterviewReportPage() {
                 <div className="sk-dossier-compare" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 12,
                   marginBottom: round.evaluation ? 12 : 0 }}>
                   <div className="sk-dossier-page user" style={{ padding: '12px 14px', borderRadius: 10,
-                    background: '#eefcf9', border: '1px solid #bdeee6' }}>
+                    background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.28)' }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--teal)',
                       marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       Your Actual Answer
@@ -645,13 +657,14 @@ export default function InterviewReportPage() {
                     </p>
                   </div>
                   <div className="sk-dossier-page coach" style={{ padding: '12px 14px', borderRadius: 10,
-                    background: '#fff7ed', border: '1px solid #fed7aa' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#c2410c',
+                    background: round.isCoachFeedback ? 'rgba(20,184,166,0.12)' : 'rgba(251,146,60,0.14)',
+                    border: round.isCoachFeedback ? '1px solid rgba(20,184,166,0.28)' : '1px solid rgba(251,146,60,0.32)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: round.isCoachFeedback ? 'var(--teal)' : 'var(--warning)',
                       marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      AI Coach Suggested Answer
+                      {round.isCoachFeedback ? 'AI Coach Feedback' : 'AI Coach Suggested Answer'}
                     </div>
                     <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                      {round.suggestedAnswer || 'A suggested answer will appear for new interviews after this update. Use the feedback below to refine this past response.'}
+                      {cleanCoachText(round.suggestedAnswer) || 'No specific feedback generated for this response.'}
                     </p>
                   </div>
                 </div>
@@ -688,16 +701,16 @@ export default function InterviewReportPage() {
                     {/* Answer quality badges */}
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
                       {round.evaluation.star_usage && (
-                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 12, background: '#ede9fe', color: '#7c3aed', fontWeight: 600 }}>STAR ✓</span>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 12, background: 'rgba(139,92,246,0.16)', color: 'var(--purple)', fontWeight: 600 }}>STAR ✓</span>
                       )}
                       {round.evaluation.used_examples && (
-                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 12, background: '#e0f7f5', color: '#1a7a6e', fontWeight: 600 }}>Examples ✓</span>
+                        <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 12, background: 'rgba(20,184,166,0.14)', color: 'var(--teal)', fontWeight: 600 }}>Examples ✓</span>
                       )}
                       {round.evaluation.answer_length_feedback && (
                         <span style={{
                           fontSize: 10, padding: '2px 8px', borderRadius: 12, fontWeight: 600,
-                          background: round.evaluation.answer_length_feedback === 'good_length' ? '#e0f7f5' : '#fef3c7',
-                          color: round.evaluation.answer_length_feedback === 'good_length' ? '#1a7a6e' : '#92400e',
+                          background: round.evaluation.answer_length_feedback === 'good_length' ? 'rgba(20,184,166,0.14)' : 'rgba(245,158,11,0.16)',
+                          color: round.evaluation.answer_length_feedback === 'good_length' ? 'var(--teal)' : 'var(--warning)',
                         }}>
                           {round.evaluation.answer_length_feedback === 'good_length' ? '✓ Good length'
                             : round.evaluation.answer_length_feedback === 'too_brief' ? '⚠ Too brief'
@@ -710,14 +723,14 @@ export default function InterviewReportPage() {
                     {(round.evaluation.strengths?.length > 0 || round.evaluation.improvements?.length > 0) && (
                       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                         {round.evaluation.strengths?.map((s, j) => (
-                          <span key={j} style={{ fontSize: 11, color: '#16a34a',
-                            background: '#f0fdf4', borderRadius: 20, padding: '2px 8px' }}>
+                          <span key={j} style={{ fontSize: 11, color: 'var(--teal)',
+                            background: 'rgba(20,184,166,0.14)', borderRadius: 20, padding: '2px 8px' }}>
                             ✓ {s}
                           </span>
                         ))}
                         {round.evaluation.improvements?.map((s, j) => (
-                          <span key={j} style={{ fontSize: 11, color: '#d97706',
-                            background: '#fffbeb', borderRadius: 20, padding: '2px 8px' }}>
+                          <span key={j} style={{ fontSize: 11, color: 'var(--warning)',
+                            background: 'rgba(245,158,11,0.16)', borderRadius: 20, padding: '2px 8px' }}>
                             ⚠ {s}
                           </span>
                         ))}
@@ -750,3 +763,4 @@ export default function InterviewReportPage() {
     </div>
   )
 }
+

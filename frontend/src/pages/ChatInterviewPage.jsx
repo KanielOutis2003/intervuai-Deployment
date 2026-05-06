@@ -496,21 +496,21 @@ export default function ChatInterviewPage() {
                       ].map(s => s.val != null ? (
                         <span key={s.label} style={{
                           fontSize: 10, padding: '2px 8px', borderRadius: 12,
-                          background: s.val >= 80 ? '#e0f7f5' : s.val >= 60 ? '#fef3c7' : '#fde8eb',
-                          color: s.val >= 80 ? '#1a7a6e' : s.val >= 60 ? '#92400e' : '#c93e52',
+                          background: s.val >= 80 ? 'rgba(20,184,166,0.14)' : s.val >= 60 ? 'rgba(245,158,11,0.16)' : 'rgba(232,86,106,0.16)',
+                          color: s.val >= 80 ? 'var(--teal)' : s.val >= 60 ? 'var(--warning)' : 'var(--danger)',
                           fontWeight: 600,
                         }}>{s.label}: {s.val}%</span>
                       ) : null)}
                       {m.evaluation.star_usage && (
                         <span style={{
                           fontSize: 10, padding: '2px 8px', borderRadius: 12,
-                          background: '#ede9fe', color: '#7c3aed', fontWeight: 600,
+                          background: 'rgba(139,92,246,0.16)', color: 'var(--purple)', fontWeight: 600,
                         }}>STAR ✓</span>
                       )}
                       {m.evaluation.used_examples && (
                         <span style={{
                           fontSize: 10, padding: '2px 8px', borderRadius: 12,
-                          background: '#e0f7f5', color: '#1a7a6e', fontWeight: 600,
+                          background: 'rgba(20,184,166,0.14)', color: 'var(--teal)', fontWeight: 600,
                         }}>Examples ✓</span>
                       )}
                     </div>
@@ -528,15 +528,15 @@ export default function ChatInterviewPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
                 padding: '6px 12px', borderRadius: 8,
-                background: currentWordCount > 200 ? '#fde8eb' : currentWordCount < 20 && currentWordCount > 0 ? '#fef3c7' : 'transparent',
+                background: currentWordCount > 200 ? 'rgba(232,86,106,0.16)' : currentWordCount < 20 && currentWordCount > 0 ? 'rgba(245,158,11,0.16)' : 'transparent',
               }}>
                 {currentWordCount > 200 && (
-                  <span style={{ fontSize: 11, color: '#c93e52', fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, color: 'var(--danger)', fontWeight: 600 }}>
                     ⚠ Your answer is getting long — focus on key points and be concise.
                   </span>
                 )}
                 {currentWordCount > 0 && currentWordCount < 20 && (
-                  <span style={{ fontSize: 11, color: '#92400e', fontWeight: 600 }}>
+                  <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 600 }}>
                     💡 Try to elaborate more — aim for 50-150 words with specific examples.
                   </span>
                 )}

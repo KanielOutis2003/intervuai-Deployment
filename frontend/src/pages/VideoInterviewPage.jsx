@@ -682,7 +682,7 @@ export default function VideoInterviewPage() {
   const canSubmit = answer.trim().length > 0 && !aiLoading && !isComplete && turnPhase === 'USER_SPEAKING'
 
   const difficultyLabel = { easy: 'Easy', moderate: 'Moderate', challenging: 'Challenging' }[difficultyLevel] || difficultyLevel
-  const difficultyColor = { easy: '#16a34a', moderate: '#d97706', challenging: '#e53e3e' }[difficultyLevel] || 'rgba(255,255,255,.4)'
+  const difficultyColor = { easy: '#16a34a', moderate: '#d97706', challenging: '#e53e3e' }[difficultyLevel] || 'var(--video-muted)'
 
   const currentWordCount = answer.trim() ? answer.trim().split(/\s+/).length : 0
   const tips = PHASE_TIPS[interviewPhase] || PHASE_TIPS.opening
@@ -696,10 +696,10 @@ export default function VideoInterviewPage() {
   }
 
   const volumeLabel = audioMetrics.volume < 10 ? 'Too quiet' : audioMetrics.volume < 25 ? 'Quiet' : audioMetrics.volume > 80 ? 'Too loud' : audioMetrics.volume > 60 ? 'Loud' : 'Good'
-  const volumeColor = audioMetrics.volume < 10 ? '#e53e3e' : audioMetrics.volume < 25 ? '#d97706' : audioMetrics.volume > 80 ? '#e53e3e' : 'var(--teal)'
+  const volumeColor = audioMetrics.volume < 10 ? 'var(--video-danger)' : audioMetrics.volume < 25 ? 'var(--video-warning)' : audioMetrics.volume > 80 ? 'var(--video-danger)' : 'var(--video-good)'
   const paceLabel = audioMetrics.pace === 0 ? '—' : audioMetrics.pace < 100 ? 'Slow' : audioMetrics.pace > 180 ? 'Too fast' : audioMetrics.pace > 160 ? 'Fast' : 'Good'
-  const paceColor = audioMetrics.pace === 0 ? 'rgba(255,255,255,.4)' : audioMetrics.pace < 100 ? '#d97706' : audioMetrics.pace > 180 ? '#e53e3e' : 'var(--teal)'
-  const sc = (v) => v == null ? 'rgba(255,255,255,.4)' : v >= 80 ? 'var(--teal)' : v >= 60 ? '#d97706' : '#e53e3e'
+  const paceColor = audioMetrics.pace === 0 ? 'var(--video-muted)' : audioMetrics.pace < 100 ? 'var(--video-warning)' : audioMetrics.pace > 180 ? 'var(--video-danger)' : 'var(--video-good)'
+  const sc = (v) => v == null ? 'var(--video-muted)' : v >= 80 ? 'var(--video-good)' : v >= 60 ? 'var(--video-warning)' : 'var(--video-danger)'
 
   // ── PreFlight start handler ────────────────────────────────────────────────
   const handlePreFlightStart = useCallback((preFlyStream) => {
@@ -792,13 +792,13 @@ export default function VideoInterviewPage() {
 
           {/* ══ SIMULATION STAGE ══ */}
           <div
-            className={isSpeaking ? 'stage-speaking' : ''}
+            className={`video-monitor ${isSpeaking ? 'stage-speaking' : ''}`}
             style={{
               position: 'relative',
               background: 'linear-gradient(160deg, #0c0f1a 0%, #13192b 60%, #0b0f1e 100%)',
-              borderRadius: 16, minHeight: 440, overflow: 'hidden', marginBottom: 16,
-              border: `1px solid ${isSpeaking ? 'rgba(0,200,140,0.25)' : 'rgba(255,255,255,0.06)'}`,
-              boxShadow: '0 4px 5px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.08)', transition: 'border-color 0.4s',
+              borderRadius: 24, minHeight: 440, overflow: 'hidden', marginBottom: 16,
+              border: `8px solid ${isSpeaking ? '#9fd9cb' : 'var(--video-bezel-border)'}`,
+              boxShadow: '0 18px 28px rgba(15,23,42,0.24), inset 0 5px 16px rgba(0,0,0,0.62), inset 0 -2px 0 rgba(255,255,255,0.12)', transition: 'border-color 0.4s ease-out, transform 0.2s ease-out',
             }}
           >
             <div style={{
@@ -838,7 +838,7 @@ export default function VideoInterviewPage() {
               <span style={{
                 background: 'rgba(0,0,0,0.62)',
                 borderRadius: 20, padding: '4px 11px',
-                fontSize: 11, color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace',
+                fontSize: 11, color: 'var(--video-muted)', fontFamily: 'monospace',
                 border: '1px solid rgba(255,255,255,0.07)',
               }}>{formatTime(elapsed)}</span>
             </div>
@@ -875,7 +875,7 @@ export default function VideoInterviewPage() {
                 <div style={{
                   marginTop: 14,
                   fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 600,
-                  color: isSpeaking ? 'var(--teal)' : aiLoading ? 'rgba(255,255,255,0.3)' : isComplete ? 'var(--teal)' : 'rgba(255,255,255,0.35)',
+                  color: isSpeaking ? 'var(--teal)' : aiLoading ? 'var(--video-subtle)' : isComplete ? 'var(--teal)' : 'var(--video-muted)',
                 }}>
                   {isSpeaking ? '● Interviewer Speaking'
                     : aiLoading && !currentQuestion ? '● Connecting…'
@@ -886,11 +886,11 @@ export default function VideoInterviewPage() {
 
                 {/* Question text */}
                 <div style={{
-                  marginTop: 14, color: '#fff', fontSize: 16, lineHeight: 1.7,
+                  marginTop: 14, color: 'var(--video-text)', fontSize: 16, lineHeight: 1.7,
                   fontFamily: 'var(--font-head)', maxWidth: 520, minHeight: 60, textAlign: 'center',
                 }}>
                   {aiLoading && !currentQuestion ? (
-                    <span style={{ color: 'rgba(255,255,255,0.25)', fontStyle: 'italic', fontSize: 15 }}>Setting up your interview…</span>
+                    <span style={{ color: 'var(--video-muted)', fontStyle: 'italic', fontSize: 15 }}>Setting up your interview…</span>
                   ) : (
                     <>
                       {displayedQuestion || (aiLoading ? '' : currentQuestion)}
@@ -900,7 +900,7 @@ export default function VideoInterviewPage() {
                 </div>
 
                 {!isTyping && !isSpeaking && !aiLoading && !isComplete && currentQuestion && interviewPhase === 'behavioral' && (
-                  <div style={{ marginTop: 12, fontSize: 12, color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+                  <div style={{ marginTop: 12, fontSize: 12, color: 'var(--video-muted)', fontStyle: 'italic' }}>
                     💡 Use the STAR method — Situation, Task, Action, Result
                   </div>
                 )}
@@ -997,7 +997,7 @@ export default function VideoInterviewPage() {
 
           {/* ── Answer input ── */}
           {!isComplete ? (
-            <div style={{ marginBottom: 12 }}>
+            <div className="video-input-slot" style={{ marginBottom: 12 }}>
               {isListening && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
@@ -1006,10 +1006,10 @@ export default function VideoInterviewPage() {
                 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#e53e3e', animation: 'recBlink 1s ease-in-out infinite', flexShrink: 0 }} />
                   <span style={{ fontSize: 12, color: 'var(--teal)', fontWeight: 600 }}>Listening</span>
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 4 }}>
+                  <span style={{ fontSize: 12, color: 'var(--video-muted)', marginLeft: 4 }}>
                     {liveSpeech ? `"${liveSpeech}"` : 'Speak now...'}
                   </span>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto' }}>Vol: {volumeLabel}</span>
+                  <span style={{ fontSize: 11, color: 'var(--video-subtle)', marginLeft: 'auto' }}>Vol: {volumeLabel}</span>
                 </div>
               )}
 
@@ -1021,19 +1021,19 @@ export default function VideoInterviewPage() {
                   background: currentWordCount > 200 ? 'rgba(229,62,62,0.12)' : currentWordCount < 20 ? 'rgba(217,119,6,0.12)' : 'transparent',
                 }}>
                   {currentWordCount > 200 && (
-                    <span style={{ fontSize: 11, color: '#e53e3e', fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: 'var(--video-danger)', fontWeight: 600 }}>
                       ⚠ Your answer is getting long — focus on key points.
                     </span>
                   )}
                   {currentWordCount > 0 && currentWordCount < 20 && (
-                    <span style={{ fontSize: 11, color: '#d97706', fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: 'var(--video-warning)', fontWeight: 600 }}>
                       💡 Elaborate more — aim for 50-150 words with examples.
                     </span>
                   )}
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+              <div className="video-input-row" style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                 <textarea
                   ref={answerRef}
                   className="chat-input"
@@ -1057,27 +1057,27 @@ export default function VideoInterviewPage() {
                   }}
                 />
                 <button
-                  className={canSubmit ? 'submit-btn-pulse' : ''}
+                  className={`video-submit-btn ${canSubmit ? 'submit-btn-pulse' : ''}`}
                   onClick={submitAnswer}
                   disabled={!canSubmit}
                   title="Submit your answer (Enter)"
                   style={{
                     width: 56, height: 56, borderRadius: 12,
-                    background: canSubmit ? 'var(--teal)' : 'rgba(255,255,255,0.08)',
-                    color: canSubmit ? '#fff' : 'rgba(255,255,255,0.3)',
-                    border: canSubmit ? '1px solid rgba(0,200,140,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                    background: canSubmit ? 'var(--teal)' : 'var(--video-submit-disabled-bg)',
+                    color: canSubmit ? 'var(--text-on-teal)' : 'var(--video-submit-disabled-text)',
+                    border: canSubmit ? '1px solid rgba(0,150,130,0.55)' : '1px solid var(--video-submit-disabled-border)',
                     fontSize: 22, cursor: canSubmit ? 'pointer' : 'default',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'transform 0.2s ease-out, border-color 0.2s ease-out, opacity 0.2s ease-out',
-                    boxShadow: canSubmit ? '0 4px 5px rgba(0,200,140,0.24), inset 0 1px 2px rgba(255,255,255,0.12)' : 'inset 0 1px 2px rgba(255,255,255,0.06)',
+                    boxShadow: canSubmit ? '0 4px 8px rgba(20,184,166,0.28), inset 0 -2px 4px rgba(0,0,0,0.18), inset 0 1px 1px rgba(255,255,255,0.5)' : 'inset 0 -2px 4px rgba(0,0,0,0.16), 0 4px 6px rgba(15,23,42,0.1)',
                   }}
                 >➤</button>
               </div>
 
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: 11, color: 'var(--video-muted)', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Press Enter to submit · Shift+Enter for new line</span>
                 {answer.trim().length > 0 && (
-                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{answer.trim().split(/\s+/).length} words</span>
+                  <span style={{ color: 'var(--video-subtle)' }}>{answer.trim().split(/\s+/).length} words</span>
                 )}
               </div>
             </div>
@@ -1087,34 +1087,34 @@ export default function VideoInterviewPage() {
                 background: 'rgba(0,200,140,0.06)', border: '1px solid rgba(0,200,140,0.2)',
                 borderRadius: 14, padding: 20, marginBottom: 12,
               }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: '#fff' }}>📋 Interview Summary</h3>
+                <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 700, color: 'var(--video-text)' }}>📋 Interview Summary</h3>
                 {finalSummary.summary_paragraph && (
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, margin: '0 0 12px' }}>{finalSummary.summary_paragraph}</p>
+                  <p style={{ fontSize: 13, color: 'var(--video-text)', lineHeight: 1.6, margin: '0 0 12px' }}>{finalSummary.summary_paragraph}</p>
                 )}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {finalSummary.overall_readiness_score != null && (
                     <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: sc(finalSummary.overall_readiness_score) }}>{finalSummary.overall_readiness_score}%</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Readiness Score</div>
+                      <div style={{ fontSize: 11, color: 'var(--video-muted)', marginTop: 2 }}>Readiness Score</div>
                     </div>
                   )}
                   {finalSummary.hiring_recommendation && (
                     <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
                       <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--teal)', textTransform: 'capitalize' }}>{finalSummary.hiring_recommendation.replace('_', ' ')}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Recommendation</div>
+                      <div style={{ fontSize: 11, color: 'var(--video-muted)', marginTop: 2 }}>Recommendation</div>
                     </div>
                   )}
                 </div>
                 {finalSummary.top_strengths?.length > 0 && (
                   <div style={{ marginTop: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)', marginBottom: 4 }}>Strengths</div>
-                    {finalSummary.top_strengths.map((s, i) => <div key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', padding: '2px 0' }}>✓ {s}</div>)}
+                    {finalSummary.top_strengths.map((s, i) => <div key={i} style={{ fontSize: 12, color: 'var(--video-muted)', padding: '2px 0' }}>✓ {s}</div>)}
                   </div>
                 )}
                 {finalSummary.areas_for_improvement?.length > 0 && (
                   <div style={{ marginTop: 8 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#d97706', marginBottom: 4 }}>Areas to Improve</div>
-                    {finalSummary.areas_for_improvement.map((s, i) => <div key={i} style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', padding: '2px 0' }}>💡 {s}</div>)}
+                    {finalSummary.areas_for_improvement.map((s, i) => <div key={i} style={{ fontSize: 12, color: 'var(--video-muted)', padding: '2px 0' }}>💡 {s}</div>)}
                   </div>
                 )}
               </div>
@@ -1143,7 +1143,7 @@ export default function VideoInterviewPage() {
               {isListening ? '⏹' : '🎙️'}
             </button>
             <button className="vid-end" onClick={handleEnd} title={isComplete ? 'View Report' : 'End interview'}
-              style={isComplete ? { background: 'var(--teal)', color: '#fff' } : {}}>
+              style={isComplete ? { background: 'var(--teal)', color: 'var(--text-on-teal)' } : {}}>
               {isComplete ? '📊 View Report' : '✕ End'}
             </button>
           </div>
@@ -1185,7 +1185,7 @@ export default function VideoInterviewPage() {
                 <span style={{
                   fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 600,
                   background: answerLengthFeedback === 'good_length' ? 'rgba(0,200,140,0.15)' : answerLengthFeedback === 'too_brief' ? 'rgba(217,119,6,0.15)' : 'rgba(229,62,62,0.15)',
-                  color: answerLengthFeedback === 'good_length' ? 'var(--teal)' : answerLengthFeedback === 'too_brief' ? '#d97706' : '#e53e3e',
+                  color: answerLengthFeedback === 'good_length' ? 'var(--video-good)' : answerLengthFeedback === 'too_brief' ? 'var(--video-warning)' : 'var(--video-danger)',
                 }}>
                   {answerLengthFeedback === 'good_length' ? '✓ Good length' : answerLengthFeedback === 'too_brief' ? '⚠ Too brief' : answerLengthFeedback === 'too_long' ? '⚠ Too long' : '—'}
                 </span>
@@ -1198,7 +1198,7 @@ export default function VideoInterviewPage() {
           <div className="vid-sidebar-card">
             <h4>🧠 Behavioral Analysis</h4>
             {isCamOff ? (
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,.4)', margin: 0, fontStyle: 'italic' }}>Enable camera for behavioral tracking.</p>
+              <p style={{ fontSize: 11, color: 'var(--video-muted)', margin: 0, fontStyle: 'italic' }}>Enable camera for behavioral tracking.</p>
             ) : (
               <>
                 <div className="vid-perf-row">
@@ -1256,7 +1256,7 @@ export default function VideoInterviewPage() {
                     <span>🚫 Filler Words</span>
                     <span className="vid-perf-pct" style={{ color: audioMetrics.fillerCount === 0 ? 'var(--teal)' : audioMetrics.fillerCount < 5 ? '#d97706' : '#e53e3e' }}>{audioMetrics.fillerCount}</span>
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', marginTop: 2 }}>{audioMetrics.fillerCount === 0 ? 'None detected' : 'Detected: um, uh, like, etc.'}</div>
+                  <div style={{ fontSize: 10, color: 'var(--video-muted)', marginTop: 2 }}>{audioMetrics.fillerCount === 0 ? 'None detected' : 'Detected: um, uh, like, etc.'}</div>
                 </div>
                 {isComplete && nonVerbalScore !== null && (
                   <div style={{ marginTop: 10, padding: 10, background: 'rgba(0,200,140,0.08)', borderRadius: 8, border: '1px solid rgba(0,200,140,0.15)' }}>
@@ -1269,7 +1269,7 @@ export default function VideoInterviewPage() {
                     </div>
                   </div>
                 )}
-                <p style={{ fontSize: 10, color: 'rgba(255,255,255,.4)', margin: '8px 0 0', lineHeight: 1.4 }}>
+                <p style={{ fontSize: 10, color: 'var(--video-muted)', margin: '8px 0 0', lineHeight: 1.4 }}>
                   {behavioralMetrics.totalFrames === 0 ? 'Calibrating…'
                     : behavioralMetrics.faceDetected ? '✓ Face detected — maintain eye contact with the camera.'
                     : '⚠ Position your face in the camera frame.'}
@@ -1281,9 +1281,9 @@ export default function VideoInterviewPage() {
           <div className="vid-sidebar-card">
             <h4>💬 Live Feedback</h4>
             {evaluation?.feedback ? (
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', margin: 0, lineHeight: 1.5 }}>{evaluation.feedback}</p>
+              <p style={{ fontSize: 12, color: 'var(--video-text)', margin: 0, lineHeight: 1.5 }}>{evaluation.feedback}</p>
             ) : (
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', margin: 0, fontStyle: 'italic' }}>Feedback appears after your first answer.</p>
+              <p style={{ fontSize: 12, color: 'var(--video-muted)', margin: 0, fontStyle: 'italic' }}>Feedback appears after your first answer.</p>
             )}
             {evaluation?.strengths?.length > 0 && (
               <div style={{ marginTop: 8 }}>
@@ -1309,18 +1309,18 @@ export default function VideoInterviewPage() {
 
           <div className="vid-sidebar-card">
             <h4>📋 Progress</h4>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,.7)', marginBottom: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--video-muted)', marginBottom: 4 }}>
               <span>Questions</span>
-              <span style={{ color: '#fff', fontWeight: 700 }}>{aiLoading && questionCount === 0 ? '…' : questionCount}{isComplete ? ' ✓' : ' / ~10'}</span>
+              <span style={{ color: 'var(--video-text)', fontWeight: 700 }}>{aiLoading && questionCount === 0 ? '…' : questionCount}{isComplete ? ' ✓' : ' / ~10'}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', marginBottom: 4 }}>
-              Phase: <strong style={{ color: '#fff' }}>{phaseIcon} {phaseLabel}</strong>
+            <div style={{ fontSize: 12, color: 'var(--video-muted)', marginBottom: 4 }}>
+              Phase: <strong style={{ color: 'var(--video-text)' }}>{phaseIcon} {phaseLabel}</strong>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--video-muted)', marginBottom: 4 }}>
               Difficulty: <strong style={{ color: difficultyColor }}>{difficultyLabel}</strong>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)', marginTop: 4 }}>Duration: {formatTime(elapsed)}</div>
-            <div style={{ marginTop: 8, background: 'rgba(255,255,255,0.08)', borderRadius: 4, height: 6, overflow: 'hidden' }}>
+            <div style={{ fontSize: 12, color: 'var(--video-muted)', marginTop: 4 }}>Duration: {formatTime(elapsed)}</div>
+            <div style={{ marginTop: 8, background: 'var(--video-progress-track)', borderRadius: 4, height: 6, overflow: 'hidden', boxShadow: 'inset 2px 2px 5px rgba(15,23,42,.14)' }}>
               <div style={{ height: '100%', borderRadius: 4, background: 'var(--teal)', transition: 'width 0.5s', width: `${Math.min(100, (questionCount / 10) * 100)}%` }} />
             </div>
             {isComplete && (

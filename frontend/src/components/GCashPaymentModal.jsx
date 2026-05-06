@@ -299,8 +299,8 @@ function CardForm({ onPay, amount }) {
         type="button"
         onClick={() => setShowTip(t => !t)}
         style={{
-          background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8,
-          padding: '6px 12px', fontSize: 11, fontWeight: 600, color: '#92400e',
+          background: 'rgba(245,158,11,0.16)', border: '1px solid rgba(245,158,11,0.36)', borderRadius: 8,
+          padding: '6px 12px', fontSize: 11, fontWeight: 600, color: 'var(--warning)',
           cursor: 'pointer', width: '100%', marginBottom: 14, textAlign: 'left',
           display: 'flex', alignItems: 'center', gap: 6,
         }}
@@ -671,7 +671,9 @@ export default function GCashPaymentModal({ isOpen, onClose, plan, onSuccess }) 
       <div style={{
         background: 'var(--card)', borderRadius: 18, width: 440, maxWidth: '100%',
         maxHeight: '92vh', overflowY: 'auto',
-        boxShadow: '0 20px 70px rgba(0,0,0,0.3)',
+        border: '1px solid var(--border)',
+        color: 'var(--text)',
+        boxShadow: '0 20px 70px rgba(0,0,0,0.5)',
         animation: 'fadeInUp 0.25s ease',
       }}>
 
@@ -711,8 +713,8 @@ export default function GCashPaymentModal({ isOpen, onClose, plan, onSuccess }) 
 
           {error && (
             <div style={{
-              background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8,
-              padding: '8px 12px', fontSize: 13, color: '#dc2626', marginBottom: 14,
+              background: 'rgba(239,68,68,0.14)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8,
+              padding: '8px 12px', fontSize: 13, color: 'var(--danger)', marginBottom: 14,
             }}>{error}</div>
           )}
 

@@ -48,7 +48,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
       >
         <div style={{
           background: 'var(--card)', borderRadius: 18, padding: 40, width: 420,
-          maxWidth: '92vw', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+          maxWidth: '92vw', textAlign: 'center', color: 'var(--text)', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
         }}>
           <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
           <h3 style={{ fontFamily: 'var(--font-head)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
@@ -73,7 +73,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
       >
         <div style={{
           background: 'var(--card)', borderRadius: 18, padding: '32px 32px 28px',
-          width: 720, maxWidth: '92vw', boxShadow: '0 8px 40px rgba(0,0,0,0.2)',
+          width: 720, maxWidth: '92vw', color: 'var(--text)', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
           maxHeight: '90vh', overflow: 'auto',
         }}>
           {/* Header */}

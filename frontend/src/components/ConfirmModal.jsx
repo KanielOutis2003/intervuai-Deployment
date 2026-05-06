@@ -77,8 +77,10 @@ export default function ConfirmModal({
         @keyframes modalPop { from { opacity: 0; transform: scale(0.92) translateY(8px) } to { opacity: 1; transform: scale(1) translateY(0) } }
       `}</style>
       <div style={{
-        background: '#fff', borderRadius: 16, maxWidth: 420, width: '100%',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+        background: 'var(--card, #fff)', color: 'var(--text, #1f2937)',
+        border: '1px solid var(--border, #e5e7eb)',
+        borderRadius: 16, maxWidth: 420, width: '100%',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
         animation: 'modalPop 0.2s ease',
         overflow: 'hidden',
       }}>
@@ -123,7 +125,7 @@ export default function ConfirmModal({
                 color: 'var(--text, #374151)', transition: 'background 0.15s',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = '#e5e7eb'}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2, #e5e7eb)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--bg, #f5f5f5)'}
             >
               {cancelLabel}

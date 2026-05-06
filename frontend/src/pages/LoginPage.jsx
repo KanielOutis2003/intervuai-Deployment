@@ -36,9 +36,9 @@ function TermsModal({ onAgree, onClose }) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div style={{
-        background: '#fff', borderRadius: 16, maxWidth: 640, width: '100%',
+        background: 'var(--card)', color: 'var(--text)', borderRadius: 16, maxWidth: 640, width: '100%',
         maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-        boxShadow: '0 24px 64px rgba(0,0,0,0.35)',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
         border: '1px solid var(--border)',
       }}>
         {/* Header */}
@@ -214,7 +214,7 @@ function TermsModal({ onAgree, onClose }) {
 
           <div style={{
             marginTop: 24, padding: '14px 16px',
-            background: '#f8f5f0', borderRadius: 10,
+            background: 'var(--bg)', borderRadius: 10,
             border: '1px solid var(--border)', fontSize: 12,
             color: 'var(--text-muted)',
           }}>
@@ -229,7 +229,7 @@ function TermsModal({ onAgree, onClose }) {
         <div style={{
           padding: '16px 28px', borderTop: '1px solid var(--border)',
           display: 'flex', gap: 10, flexShrink: 0,
-          background: '#fafafa', borderRadius: '0 0 16px 16px',
+          background: 'var(--bg)', borderRadius: '0 0 16px 16px',
         }}>
           <button
             className="btn btn-coral btn-full"
@@ -260,7 +260,7 @@ function Section({ num, title, children }) {
         display: 'flex', gap: 8, alignItems: 'baseline',
       }}>
         <span style={{
-          background: 'var(--coral)', color: '#fff',
+          background: 'var(--coral)', color: 'var(--text-on-coral)',
           borderRadius: '50%', width: 20, height: 20, fontSize: 10,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0, fontWeight: 700,

@@ -98,7 +98,9 @@ const modal = {
   background: 'var(--card, #fff)', borderRadius: 16,
   padding: '40px 36px 32px', maxWidth: 480, width: '90%',
   position: 'relative', textAlign: 'center',
-  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+  color: 'var(--text, #2e2b27)',
+  border: '1px solid var(--border, #e0dcd4)',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
 }
 
 const closeBtn = {
