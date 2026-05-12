@@ -5,6 +5,7 @@ from app.middleware.auth import require_admin
 from app.middleware.audit import audit_log
 from app.services.admin_service import AdminService
 from app.services.subscription_service import SubscriptionService
+from app.services.testimonial_service import TestimonialService
 from app.utils.responses import success_response, error_response, APIError
 from app.utils.validation import (
     validate_request, AddBankQuestionSchema, CreateJobRoleSchema, CreatePlanSchema
@@ -89,6 +90,29 @@ def get_sales_report():
         return error_response(f"Failed to get sales report: {str(e)}", 500)
 
 # ── User Management ───────────────────────────────────────────────────────────
+
+@admin_bp.route('/testimonials', methods=['GET'])
+@require_admin
+def list_testimonials():
+    """List all testimonials for admin moderation."""
+    try:
+        data = TestimonialService.list_admin()
+        return success_response({"testimonials": data})
+    except APIError as e:
+        return error_response(e.message, e.status_code)
+
+
+@admin_bp.route('/testimonials/<testimonial_id>', methods=['PATCH'])
+@require_admin
+@audit_log('moderate_testimonial', 'testimonial')
+def update_testimonial(testimonial_id):
+    """Update testimonial status and featured flag."""
+    try:
+        data = TestimonialService.update_admin(testimonial_id, request.get_json() or {})
+        return success_response(data)
+    except APIError as e:
+        return error_response(e.message, e.status_code)
+
 
 @admin_bp.route('/users', methods=['GET'])
 @require_admin

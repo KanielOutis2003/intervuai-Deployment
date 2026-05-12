@@ -142,6 +142,16 @@ const adminService = {
   },
 
   // ── Audit Logs ─────────────────────────────────────────────────────
+  async getTestimonials() {
+    const res = await api.get('/admin/testimonials')
+    return res.data.data
+  },
+
+  async updateTestimonial(testimonialId, data) {
+    const res = await api.patch(`/admin/testimonials/${testimonialId}`, data)
+    return res.data.data
+  },
+
   async getAuditLogs({ userId, action, resourceType, limit = 50, offset = 0 } = {}) {
     const params = new URLSearchParams({ limit, offset })
     if (userId)       params.append('userId',       userId)

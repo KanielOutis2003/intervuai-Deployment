@@ -1,29 +1,37 @@
-const TESTIMONIALS = [
+import { useEffect, useMemo, useState } from 'react'
+import testimonialService from '../services/testimonialService'
+
+const SAMPLE_TESTIMONIALS = [
   {
-    init: 'J',
-    name: 'John Doe',
-    role: 'Software Engineer',
-    color: '#e8566a',
+    id: 'sample-katherine-aplacador',
+    displayName: 'Katherine Aplacador',
+    roleTitle: 'Premium Candidate',
     rating: 5,
-    text: 'IntervuAI helped me prepare for FAANG-style interviews. The feedback was specific, practical, and made my technical answers much clearer.',
+    quote: 'IntervuAI Premium helped me organize my answers and sound more confident during high-pressure interview practice.',
+    featured: true,
+    sample: true,
   },
   {
-    init: 'M',
-    name: 'Michael Chen',
-    role: 'Product Manager',
-    color: '#3ecfbf',
+    id: 'sample-emman-rivera',
+    displayName: 'Emman Rivera',
+    roleTitle: 'Premium Candidate',
     rating: 5,
-    text: 'The coaching felt personal. After a few weeks of practice, I went from nervous and scattered to confident and structured.',
+    quote: 'The AI feedback made every session feel purposeful. I could see exactly where my answers needed more structure.',
+    featured: true,
+    sample: true,
   },
   {
-    init: 'E',
-    name: 'Emily Parker',
-    role: 'Marketing Director',
-    color: '#f59e0b',
-    rating: 4.8,
-    text: 'Best investment in my career prep. It found my weak points quickly and helped me turn them into stronger interview stories.',
+    id: 'sample-ed-lester-pillejera',
+    displayName: 'Ed Lester Pillejera',
+    roleTitle: 'Premium Candidate',
+    rating: 5,
+    quote: 'The post-interview report helped me turn scattered answers into stronger stories I could actually use.',
+    featured: false,
+    sample: true,
   },
 ]
+
+const AVATAR_COLORS = ['#e8566a', '#3ecfbf', '#f59e0b', '#8b5cf6']
 
 function Stars({ rating }) {
   return (
@@ -36,27 +44,57 @@ function Stars({ rating }) {
   )
 }
 
+function getInitials(name = '') {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'P'
+  if (parts.length === 1) return parts[0][0]?.toUpperCase() || 'P'
+  return `${parts[0][0] || ''}${parts[parts.length - 1][0] || ''}`.toUpperCase()
+}
+
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    testimonialService.listPublic()
+      .then(data => {
+        if (active) setTestimonials(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (active) setTestimonials([])
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [])
+
+  const cards = useMemo(() => testimonials.length > 0 ? testimonials : SAMPLE_TESTIMONIALS, [testimonials])
+  const usingSamples = testimonials.length === 0
+
   return (
     <section className="testi-section">
       <div className="testi-inner">
         <div className="testi-header">
-          <div className="testi-proof-pill">4.9/5 average rating from 50K+ candidates</div>
+          <div className="testi-proof-pill">Feedback from candidates using IntervuAI Premium</div>
           <h2 className="section-title">Loved by Job Seekers</h2>
           <p className="section-sub">Realistic practice, clearer answers, stronger interview confidence</p>
         </div>
         <div className="testi-cards">
-          {TESTIMONIALS.map(t => (
-            <div className="testi-card" key={t.name}>
+          {cards.map((t, idx) => (
+            <div className="testi-card" key={t.id || `${t.displayName}-${idx}`}>
               <div className="testi-card-top">
-                <div className="testi-avatar" style={{ background: t.color }}>{t.init}</div>
+                <div className="testi-avatar" style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
+                  {getInitials(t.displayName)}
+                </div>
                 <div>
-                  <div className="testi-name">{t.name}</div>
-                  <div className="testi-role">{t.role}</div>
+                  <div className="testi-name">{t.displayName}</div>
+                  <div className="testi-role">{t.roleTitle}</div>
                 </div>
               </div>
-              <Stars rating={t.rating} />
-              <p className="testi-text">"{t.text}"</p>
+              <Stars rating={Number(t.rating) || 5} />
+              <p className="testi-text">"{t.quote}"</p>
             </div>
           ))}
         </div>

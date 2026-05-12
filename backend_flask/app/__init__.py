@@ -81,6 +81,7 @@ def create_app(config_name='default'):
     from app.routes.resource_routes import resource_bp
     from app.routes.admin_routes import admin_bp
     from app.routes.subscription_routes import subscription_bp
+    from app.routes.testimonial_routes import testimonial_bp
     from app.routes.ai_routes import ai_bp
     from app.routes.tts_routes import tts_bp
 
@@ -95,6 +96,7 @@ def create_app(config_name='default'):
     app.register_blueprint(resource_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(subscription_bp)
+    app.register_blueprint(testimonial_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(tts_bp)
 

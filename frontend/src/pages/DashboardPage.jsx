@@ -10,6 +10,7 @@ import analyticsService from '../services/analyticsService'
 import UpgradeModal from '../components/UpgradeModal'
 import AppTour from '../components/AppTour'
 import ConfirmModal from '../components/ConfirmModal'
+import TestimonialSubmissionForm from '../components/TestimonialSubmissionForm'
 
 const LogoIcon = () => (
   <div className="nav-logo-icon">
@@ -1039,6 +1040,8 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
+
+                  <TestimonialSubmissionForm />
 
                   {/* Upgrade CTA for free users */}
                   {!isPremium && (

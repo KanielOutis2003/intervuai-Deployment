@@ -15,6 +15,7 @@ const ROLES        = ['user', 'premium', 'admin']
 const DIFFICULTIES = ['easy', 'medium', 'hard']
 const CATEGORIES   = ['behavioral', 'technical', 'situational', 'general']
 const STATUSES     = ['pending', 'active', 'completed', 'cancelled']
+const TESTIMONIAL_STATUSES = ['pending', 'approved', 'rejected', 'hidden']
 const JOB_CATEGORIES = [
   'Technology', 'Healthcare', 'BPO / Customer Service', 'Finance',
   'Business & Management', 'Sales & Marketing', 'HR & Administration',
@@ -2018,7 +2019,138 @@ function PlansTab() {
   )
 }
 
-// ── Audit Logs Tab ────────────────────────────────────────────────────────────
+// Testimonials Tab
+function TestimonialsTab() {
+  const [testimonials, setTestimonials] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [msg, setMsg] = useState({ type: '', text: '' })
+  const [savingId, setSavingId] = useState('')
+
+  const flash = (type, text) => {
+    setMsg({ type, text })
+    setTimeout(() => setMsg({ type: '', text: '' }), 3500)
+  }
+
+  const load = useCallback(() => {
+    setLoading(true)
+    adminService.getTestimonials()
+      .then(data => setTestimonials(data?.testimonials || []))
+      .catch(() => flash('error', 'Failed to load testimonials.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const updateTestimonial = async (testimonial, patch) => {
+    setSavingId(testimonial.id)
+    try {
+      const updated = await adminService.updateTestimonial(testimonial.id, patch)
+      setTestimonials(list => list.map(item => item.id === testimonial.id ? { ...item, ...updated } : item))
+      flash('success', 'Testimonial updated.')
+    } catch (err) {
+      flash('error', err?.response?.data?.error || 'Failed to update testimonial.')
+    } finally {
+      setSavingId('')
+    }
+  }
+
+  const statusCounts = TESTIMONIAL_STATUSES.reduce((acc, status) => {
+    acc[status] = testimonials.filter(item => item.status === status).length
+    return acc
+  }, {})
+
+  return (
+    <SectionCard
+      title={`Testimonials - ${testimonials.length} submissions`}
+      action={<button className="btn btn-outline btn-sm" onClick={load}>Refresh</button>}
+    >
+      {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 10, marginBottom: 16 }}>
+        {TESTIMONIAL_STATUSES.map(status => (
+          <div key={status} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 800 }}>{status}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: status === 'approved' ? 'var(--teal)' : status === 'rejected' ? 'var(--coral)' : 'var(--text)' }}>
+              {statusCounts[status] || 0}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {loading ? <EmptyState icon="..." message="Loading testimonials..." /> : (
+        testimonials.length === 0 ? (
+          <EmptyState icon="*" message="No testimonial submissions yet." />
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '10px 8px' }}>Date</th>
+                  <th style={{ padding: '10px 8px' }}>User</th>
+                  <th style={{ padding: '10px 8px' }}>Premium</th>
+                  <th style={{ padding: '10px 8px' }}>Rating</th>
+                  <th style={{ padding: '10px 8px', minWidth: 280 }}>Quote</th>
+                  <th style={{ padding: '10px 8px' }}>Status</th>
+                  <th style={{ padding: '10px 8px' }}>Featured</th>
+                </tr>
+              </thead>
+              <tbody>
+                {testimonials.map(item => (
+                  <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '12px 8px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{fmt(item.createdAt, true)}</td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ fontWeight: 800, color: 'var(--text)' }}>{item.displayName}</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{item.roleTitle || item.userName || 'Premium user'}</div>
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <span className={`tag ${item.isPremiumAtSubmission ? 'tag-teal' : 'tag-yellow'}`}>
+                        {item.isPremiumAtSubmission ? 'Verified' : 'Unverified'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 8px', whiteSpace: 'nowrap', color: '#f59e0b', fontWeight: 800 }}>
+                      {'★'.repeat(Math.round(Number(item.rating) || 0))}
+                      <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>{Number(item.rating || 0).toFixed(1)}</span>
+                    </td>
+                    <td style={{ padding: '12px 8px', color: 'var(--text)', lineHeight: 1.5 }}>
+                      "{item.quote}"
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <select
+                        className="chart-select"
+                        value={item.status || 'pending'}
+                        disabled={savingId === item.id}
+                        onChange={e => updateTestimonial(item, { status: e.target.value })}
+                      >
+                        {TESTIMONIAL_STATUSES.map(status => <option key={status} value={status}>{status}</option>)}
+                      </select>
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <button
+                        className="btn btn-outline btn-sm"
+                        disabled={savingId === item.id}
+                        onClick={() => updateTestimonial(item, { featured: !item.featured })}
+                        style={{
+                          minWidth: 92,
+                          color: item.featured ? '#d4a017' : 'var(--text-muted)',
+                          borderColor: item.featured ? 'rgba(245,158,11,0.45)' : 'var(--border)',
+                          background: item.featured ? 'rgba(245,158,11,0.12)' : 'var(--sk-button-bg)',
+                        }}
+                      >
+                        {item.featured ? '★ Featured' : '☆ Feature'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+    </SectionCard>
+  )
+}
+
+// Audit Logs Tab
 function AuditLogsTab() {
   const [logs, setLogs]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -2294,6 +2426,7 @@ const TABS = [
   { id: 'jobroles',   label: '💼 Job Roles' },
   { id: 'resources',  label: '📚 Resources' },
   { id: 'plans',      label: '💳 Plans' },
+  { id: 'testimonials', label: 'Testimonials' },
   { id: 'audit',      label: '📋 Audit Logs' },
   { id: 'settings',   label: '⚙️ Settings' },
 ]
@@ -2515,6 +2648,7 @@ export default function AdminDashboardPage() {
           {activeTab === 'jobroles'   && <JobRolesTab />}
           {activeTab === 'resources'  && <ResourcesTab />}
           {activeTab === 'plans'      && <PlansTab />}
+          {activeTab === 'testimonials' && <TestimonialsTab />}
           {activeTab === 'audit'      && <AuditLogsTab />}
           {activeTab === 'settings'   && <SettingsTab config={config} />}
         </div>
