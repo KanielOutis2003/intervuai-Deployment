@@ -233,7 +233,7 @@ export default function AnalyticsPage() {
                   <div className="chart-card" style={{marginBottom:0}}>
                     <h3 style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,marginBottom:16}}>Improvement Trend</h3>
                     {scores.length >= 2 ? (
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
+                      <div className="responsive-three-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
                         <div style={{textAlign:'center',padding:20,background:'var(--sk-recessed)',borderRadius:12,boxShadow:'var(--sk-input-shadow)'}}>
                           <div style={{fontSize:12,color:'var(--text-muted)',marginBottom:4}}>First Session</div>
                           <div style={{fontFamily:'var(--font-head)',fontSize:28,fontWeight:700,color:'var(--coral)'}}>
@@ -353,7 +353,8 @@ export default function AnalyticsPage() {
               <div className="chart-card">
                 <div className="chart-card-header"><h3>Interview History</h3></div>
                 {timeline.length > 0 ? (
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
+                  <div className="responsive-table-wrap">
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
                     <thead>
                       <tr style={{borderBottom:'2px solid var(--border)',textAlign:'left'}}>
                         {['Role','Overall','Verbal','Non-Verbal','Status','Date'].map(h => (
@@ -373,7 +374,8 @@ export default function AnalyticsPage() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                    </table>
+                  </div>
                 ) : (
                   <div style={{textAlign:'center',padding:'40px 0',color:'var(--text-muted)',fontSize:13}}>
                     <div style={{fontSize:32,marginBottom:8}}>📋</div>

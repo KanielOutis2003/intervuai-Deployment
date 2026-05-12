@@ -105,7 +105,7 @@ function ConfirmModal({ title, message, onConfirm, onClose, confirmText = 'Confi
         <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-head)', color: 'var(--text)' }}>{title}</h3>
         <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.5 }}>{message}</p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <button className="btn btn-outline" style={{ padding: '10px' }} onClick={onClose}>{cancelText}</button>
         <button className={`btn btn-${type}`} style={{ padding: '10px' }} onClick={onConfirm}>{confirmText}</button>
       </div>
@@ -198,7 +198,7 @@ function OverviewTab({ metrics, config, analytics }) {
         {kpis.map(k => <KpiCard key={k.label} {...k} />)}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Score Distribution */}
         <SectionCard title="📈 Score Distribution">
           {Object.keys(distData).length === 0 ? (
@@ -313,7 +313,7 @@ function SystemAnalyticsTab({ analytics, timeseries }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div className="admin-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h4 style={{ margin: 0 }}>Score Distribution</h4>
@@ -364,14 +364,14 @@ function SystemAnalyticsTab({ analytics, timeseries }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
         {/* Interviews per day (last 30 days) */}
         <div className="admin-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h4 style={{ margin: 0 }}>Interviews per Day</h4>
           </div>
           {perDay.length > 0 ? (
-            <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+            <div className="responsive-table-wrap" style={{ overflowX: 'auto', paddingBottom: 8 }}>
               <svg className="chart-svg" viewBox={`0 0 ${Math.max(perDay.length * 20, 400)} 220`} style={{ width: '100%', height: 240 }}>
                 {[0, 5, 10, 15, 20].map(y => (
                   <g key={y}>
@@ -646,7 +646,7 @@ function SalesReportTab() {
       {!error && (
         <SectionCard title="Recent Transactions">
           {transactions.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
               <table className="admin-transactions-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -922,7 +922,7 @@ function UsersTab({ setGlobalLoading }) {
       }
     >
       {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
-      <div style={{ overflowX: 'auto' }}>
+      <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -1186,7 +1186,7 @@ function InterviewsTab({ setGlobalLoading }) {
         </div>
       ) : (
         <>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -1375,7 +1375,7 @@ function QuestionsTab() {
 
       {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
       {loading ? <EmptyState icon="⏳" message="Loading questions…" /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -1428,7 +1428,7 @@ function QuestionsTab() {
             <textarea className="form-input" rows={3} style={{ resize: 'vertical' }} value={form.questionText}
               onChange={e => setForm(f => ({ ...f, questionText: e.target.value }))} placeholder="Enter interview question…" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
               <div className="form-label">Interview Type *</div>
               <select className="form-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
@@ -1582,7 +1582,7 @@ function JobRolesTab() {
 
       {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
       {loading ? <EmptyState icon="⏳" message="Loading…" /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -1790,7 +1790,7 @@ function ResourcesTab() {
     >
       {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
       {loading ? <EmptyState icon="⏳" message="Loading resources…" /> : (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -1989,7 +1989,7 @@ function PlansTab() {
       {showModal && (
         <Modal title="Create Subscription Plan" onClose={() => setShowModal(false)}>
           {msg.type === 'error' && msg.text && <div className="error-msg" style={{ marginBottom: 12 }}>{msg.text}</div>}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group">
               <div className="form-label">Plan Name *</div>
               <input className="form-input" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Pro" />
@@ -2081,7 +2081,7 @@ function TestimonialsTab() {
         testimonials.length === 0 ? (
           <EmptyState icon="*" message="No testimonial submissions yet." />
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
@@ -2211,7 +2211,7 @@ function AuditLogsTab() {
       {msg && <div className="error-msg" style={{ marginBottom: 12 }}>{msg}</div>}
       {loading ? <EmptyState icon="⏳" message="Loading logs…" /> : (
         <>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="responsive-table-wrap" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
@@ -2317,7 +2317,7 @@ function SettingsTab({ config }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {msg.text && <div className={msg.type === 'error' ? 'error-msg' : 'success-msg'} style={{ marginBottom: 12 }}>{msg.text}</div>}
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Profile Settings */}
         <SectionCard title="👤 Profile Settings">
           <div className="form-group">
@@ -2495,7 +2495,7 @@ export default function AdminDashboardPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page)', color: 'var(--text)' }}>
       {/* Nav */}
-      <nav style={{
+      <nav className="responsive-app-nav" style={{
         background: 'var(--bg-page)', 
         borderBottom: '1px solid var(--border)',
         padding: '0 24px', height: 56,
@@ -2513,7 +2513,7 @@ export default function AdminDashboardPage() {
             </span>
           </span>
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div className="responsive-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {metrics && (
             <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-muted)' }}>
               <span>👥 {metrics.totalUsers} users</span>
@@ -2544,7 +2544,7 @@ export default function AdminDashboardPage() {
             </button>
 
             {showNotifs && (
-              <div style={{ 
+              <div className="responsive-popover" style={{ 
                 position: 'absolute', top: '100%', right: 0, marginTop: 12, width: 320, 
                 background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, 
                 boxShadow: '0 10px 25px rgba(0,0,0,0.2)', overflow: 'hidden', zIndex: 1000 
@@ -2615,7 +2615,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Tab bar */}
-        <div style={{
+        <div className="responsive-toast" style={{ 
           display: 'flex', gap: 4, marginBottom: 24, overflowX: 'auto',
           background: 'var(--card)', borderRadius: 12, padding: 6,
           border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
@@ -2690,3 +2690,4 @@ export default function AdminDashboardPage() {
     </div>
   )
 }
+

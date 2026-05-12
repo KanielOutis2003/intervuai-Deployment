@@ -178,7 +178,7 @@ export default function InterviewReportPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-page, #f8f5f0)' }}>
       {/* Nav */}
-      <nav style={{
+      <nav className="responsive-app-nav" style={{
         background: 'var(--card)', borderBottom: '1px solid var(--border)',
         padding: '0 24px', height: 56,
         display: 'flex', alignItems: 'center', gap: 12,
@@ -190,12 +190,12 @@ export default function InterviewReportPage() {
         </Link>
         <span style={{ color: 'var(--border)' }}>|</span>
         <span style={{ color: 'var(--text-muted)', fontSize: 14 }}>Interview Report</span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/dashboard')}>
+        <div className="responsive-nav-actions" style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm report-back-action" onClick={() => navigate('/dashboard')}>
             ← Dashboard
           </button>
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm report-export-action"
             onClick={() => requirePremiumExport(() => toPDF())}
             title={isPremium ? 'Download PDF' : 'Premium export locked'}
             style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
@@ -203,19 +203,38 @@ export default function InterviewReportPage() {
             ↓ Download PDF
           </button>
           <button
-            className="btn btn-ghost btn-sm"
+            className="btn btn-ghost btn-sm report-export-action"
             onClick={() => requirePremiumExport(downloadCSV)}
             title={isPremium ? 'Export CSV' : 'Premium export locked'}
             style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
           >
             Export CSV
           </button>
-          <button className="btn btn-coral btn-sm"
+          <button className="btn btn-coral btn-sm report-new-action"
             onClick={() => navigate('/interview/chat')}>
             + New Interview
           </button>
         </div>
       </nav>
+
+      <div className="report-mobile-action-bar">
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() => requirePremiumExport(() => toPDF())}
+          title={isPremium ? 'Download PDF' : 'Premium export locked'}
+          style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
+        >
+          PDF
+        </button>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() => requirePremiumExport(downloadCSV)}
+          title={isPremium ? 'Export CSV' : 'Premium export locked'}
+          style={!isPremium ? { borderColor: 'var(--coral)', color: 'var(--coral)', fontWeight: 700 } : {}}
+        >
+          CSV
+        </button>
+      </div>
 
       {!isPremium && (
         <div style={{ maxWidth: 820, margin: '18px auto 0', padding: '0 20px' }}>
@@ -358,7 +377,7 @@ export default function InterviewReportPage() {
                     {cfg.desc}
                   </div>
                 </div>
-                <div style={{
+                <div className="report-hero-scoremark" style={{
                   textAlign: 'right', flexShrink: 0,
                 }}>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginBottom: 3 }}>
@@ -400,7 +419,7 @@ export default function InterviewReportPage() {
 
             {/* Readiness scores grid */}
             {(finalSummary.communication_score || finalSummary.technical_readiness || finalSummary.behavioral_readiness) && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+              <div className="responsive-three-col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                 {[
                   { label: 'Communication', value: finalSummary.communication_score, color: 'var(--teal)' },
                   { label: 'Technical', value: finalSummary.technical_readiness, color: 'var(--coral)' },
@@ -417,7 +436,7 @@ export default function InterviewReportPage() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {finalSummary.top_strengths?.length > 0 && (
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#16a34a',

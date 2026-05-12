@@ -46,7 +46,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
         onClick={e => { if (e.target === e.currentTarget) onClose() }}
       >
-        <div style={{
+        <div className="responsive-modal-panel" style={{
           background: 'var(--card)', borderRadius: 18, padding: 40, width: 420,
           maxWidth: '92vw', textAlign: 'center', color: 'var(--text)', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
         }}>
@@ -71,7 +71,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
         onClick={e => { if (e.target === e.currentTarget) onClose() }}
       >
-        <div style={{
+        <div className="responsive-modal-panel" style={{
           background: 'var(--card)', borderRadius: 18, padding: '32px 32px 28px',
           width: 720, maxWidth: '92vw', color: 'var(--text)', border: '1px solid var(--border)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
           maxHeight: '90vh', overflow: 'auto',
@@ -90,7 +90,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
           </div>
 
           {/* Plan cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+          <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
             {/* Free Plan */}
             <div style={{ background: 'var(--bg)', borderRadius: 14, padding: 24, border: '1.5px solid var(--border)' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Free</div>

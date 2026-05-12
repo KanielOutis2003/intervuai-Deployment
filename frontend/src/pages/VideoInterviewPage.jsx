@@ -770,7 +770,7 @@ export default function VideoInterviewPage() {
 
       {/* ── Top bar ── */}
       <div className="video-topbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="video-topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div>
             <div className="video-logo-text">IntervuAI</div>
             <div className="video-logo-sub">{interview?.job_role || 'Video Interview'}</div>
@@ -824,7 +824,7 @@ export default function VideoInterviewPage() {
             </div>
 
             {/* Top-right: phase + timer */}
-            <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="video-stage-badges" style={{ position: 'absolute', top: 14, right: 14, zIndex: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{
                 background: 'rgba(0,200,140,0.12)', border: '1px solid rgba(0,200,140,0.3)',
                 borderRadius: 20, padding: '4px 11px',
@@ -844,12 +844,12 @@ export default function VideoInterviewPage() {
             </div>
 
             {/* Main content: AI Avatar + PiP */}
-            <div style={{
+            <div className="video-stage-content" style={{
               display: 'flex', alignItems: 'stretch', minHeight: 440,
               padding: '48px 0 56px 0', position: 'relative', zIndex: 1,
             }}>
               {/* Left: AI Avatar (main focus) */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}>
+              <div className="video-stage-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}>
                 {showAvatar ? (
                   <AvatarCanvas audioRef={tts.audioRef} isSpeaking={isSpeaking} style={{
                     width: '100%', maxWidth: 340, height: 300, borderRadius: 20,
@@ -907,7 +907,7 @@ export default function VideoInterviewPage() {
               </div>
 
               {/* PiP camera */}
-              <div style={{ width: 210, flexShrink: 0, paddingRight: 14, alignSelf: 'flex-end', paddingBottom: 54 }}>
+              <div className="video-pip" style={{ width: 210, flexShrink: 0, paddingRight: 14, alignSelf: 'flex-end', paddingBottom: 54 }}>
                 {/* Nudge toast — floats above PiP camera when MediaPipe fires a coaching nudge */}
                 {activeNudge && (
                   <div style={{
@@ -1074,7 +1074,7 @@ export default function VideoInterviewPage() {
                 >➤</button>
               </div>
 
-              <div style={{ fontSize: 11, color: 'var(--video-muted)', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+              <div className="video-input-meta" style={{ fontSize: 11, color: 'var(--video-muted)', marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
                 <span>Press Enter to submit · Shift+Enter for new line</span>
                 {answer.trim().length > 0 && (
                   <span style={{ color: 'var(--video-subtle)' }}>{answer.trim().split(/\s+/).length} words</span>
@@ -1091,7 +1091,7 @@ export default function VideoInterviewPage() {
                 {finalSummary.summary_paragraph && (
                   <p style={{ fontSize: 13, color: 'var(--video-text)', lineHeight: 1.6, margin: '0 0 12px' }}>{finalSummary.summary_paragraph}</p>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="video-summary-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {finalSummary.overall_readiness_score != null && (
                     <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, padding: 12, textAlign: 'center' }}>
                       <div style={{ fontSize: 28, fontWeight: 800, color: sc(finalSummary.overall_readiness_score) }}>{finalSummary.overall_readiness_score}%</div>

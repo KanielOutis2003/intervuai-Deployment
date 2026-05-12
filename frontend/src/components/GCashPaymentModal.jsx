@@ -123,7 +123,7 @@ function Steps({ step }) {
 /* Method selector */
 function MethodSelector({ selected, onSelect }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
+    <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
       {METHODS.map(m => {
         const isActive = selected === m.id
         return (
@@ -308,7 +308,7 @@ function CardForm({ onPay, amount }) {
         🧪 Sandbox mode — click to see test card numbers {showTip ? '▲' : '▼'}
       </button>
       {showTip && (
-        <div style={{
+        <div className="responsive-two-col" style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14,
         }}>
           {SANDBOX_CARDS.map(c => (
@@ -378,7 +378,7 @@ function CardForm({ onPay, amount }) {
       </div>
 
       {/* Expiry + CVV */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+      <div className="responsive-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 5, color: 'var(--text-muted)' }}>Expiry Date</label>
           <input
@@ -473,7 +473,7 @@ function EWalletForm({ method, plan, onPay, onCountdownDone }) {
   return (
     <div style={{ textAlign: 'center' }}>
       {/* Branded header */}
-      <div style={{
+      <div className="responsive-modal-panel" style={{
         background: meta.color, borderRadius: 12, padding: '10px 16px', marginBottom: 16,
         display: 'flex', alignItems: 'center', gap: 10,
       }}>

@@ -373,7 +373,7 @@ export default function DashboardPage() {
         </Link>
 
         {/* Global Search Bar */}
-        <div style={{ flex: 1, maxWidth: 400, margin: '0 32px', position: 'relative' }} ref={searchContainerRef}>
+        <div className="dash-search-wrap" style={{ flex: 1, maxWidth: 400, margin: '0 32px', position: 'relative' }} ref={searchContainerRef}>
           <div className="search-bar" style={{ maxWidth: '100%', margin: 0 }}>
             <span className="search-icon">🔍</span>
             <input
@@ -401,9 +401,16 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <Link to="/analytics" className="btn btn-ghost btn-sm">Analytics</Link>
-          <Link to="/resources" className="btn btn-ghost btn-sm">Resources</Link>
+        <div className="dash-nav-actions" style={{display:'flex',alignItems:'center',gap:16}}>
+          <Link to="/analytics" className="btn btn-ghost btn-sm dash-desktop-link">Analytics</Link>
+          <Link to="/resources" className="btn btn-ghost btn-sm dash-desktop-link">Resources</Link>
+          <details className="mobile-nav-menu">
+            <summary aria-label="Open navigation menu">☰</summary>
+            <div className="mobile-nav-menu-panel">
+              <Link to="/analytics">Analytics</Link>
+              <Link to="/resources">Resources</Link>
+            </div>
+          </details>
           <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
             {theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
           </button>
@@ -695,7 +702,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
           onClick={e => { if (e.target === e.currentTarget) closeModal() }}
         >
-          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:460,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
+          <div className="responsive-modal-panel" style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:460,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
             <h3 style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,marginBottom:6}}>
               {interviewType === 'video' ? '🎥 Start Video Interview' : '💬 Start Chat Interview'}
             </h3>
@@ -778,7 +785,7 @@ export default function DashboardPage() {
               <div style={{fontSize:12,fontWeight:700,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:0.5,marginBottom:8}}>
                 Interview Focus
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <div className="responsive-two-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                 {INTERVIEW_TYPES.map(t => (
                   <button
                     key={t.value}
@@ -830,7 +837,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000}}
           onClick={e => { if (e.target === e.currentTarget) setShowSettingsModal(false) }}
         >
-          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:560,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
+          <div className="responsive-modal-panel" style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:560,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',maxHeight:'85vh',display:'flex',flexDirection:'column'}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
               <h3 style={{fontFamily:'var(--font-head)',fontSize:24,fontWeight:700}}>Settings</h3>
               <button onClick={() => setShowSettingsModal(false)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--text-muted)'}}>✕</button>
@@ -1019,7 +1026,7 @@ export default function DashboardPage() {
                         background:'rgba(0,200,140,0.06)',border:'1px solid rgba(0,200,140,0.18)',
                         borderRadius:10,padding:'12px 14px',width:'100%',boxSizing:'border-box',
                       }}>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 20px',fontSize:13}}>
+                        <div className="responsive-two-col" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 20px',fontSize:13}}>
                           <div><span style={{color:'var(--text-muted)'}}>Plan</span><br/><strong>{subscription.plan.name}</strong></div>
                           <div><span style={{color:'var(--text-muted)'}}>Price</span><br/><strong>${subscription.plan.price}/mo</strong></div>
                           {subscription.startedAt && (
@@ -1171,7 +1178,7 @@ export default function DashboardPage() {
           style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1100}}
           onClick={e => { if (e.target === e.currentTarget) setShowLogoutModal(false) }}
         >
-          <div style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:400,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',textAlign:'center'}}>
+          <div className="responsive-modal-panel" style={{background:'var(--card)',color:'var(--text)',border:'1px solid var(--border)',borderRadius:18,padding:36,width:400,boxShadow:'0 8px 40px rgba(0,0,0,0.5)',textAlign:'center'}}>
             <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,#ff6b6b22,#ff6b6b11)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px',fontSize:28}}>
               👋
             </div>
